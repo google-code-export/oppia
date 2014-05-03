@@ -272,6 +272,24 @@ class SetOfUnicodeString(List):
             raise TypeError('Cannot convert to set of strings: %s' % raw)
 
 
+class ListOfUnicodeString(List):
+    """Class for lists of UnicodeStrings."""
+
+    description = 'A list of unicode strings.'
+    edit_html_filename = 'list_editor'
+    edit_js_filename = 'ListOfUnicodeStringEditor'
+
+    @classmethod
+    def normalize(cls, raw):
+        """Validates and normalizes a raw Python object."""
+        try:
+            assert isinstance(raw, (list, tuple))
+            assert all([isinstance(item, basestring) for item in raw])
+            return list([unicode(item) for item in raw])
+        except Exception:
+            raise TypeError('Cannot convert to list of strings: %s' % raw)
+
+
 class UnicodeString(BaseObject):
     """Unicode string class."""
 

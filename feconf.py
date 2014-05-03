@@ -183,6 +183,9 @@ ALLOWED_WIDGETS = {
         'SetInput': {
             'dir': 'extensions/widgets/interactive/SetInput'
         },
+        'ListInput': {
+            'dir': 'extensions/widgets/interactive/ListInput'
+        },
         'FileReadInput': {
             'dir': 'extensions/widgets/interactive/FileReadInput'
         },
