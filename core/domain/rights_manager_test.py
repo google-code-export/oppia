@@ -90,13 +90,10 @@ class ExplorationRightsTests(test_utils.GenericTestBase):
             self.user_id_a, self.EXP_ID, self.user_id_b,
             rights_manager.ROLE_EDITOR)
 
-        self.assertTrue(
-            rights_manager.Actor(self.user_id_a).is_owner(self.EXP_ID))
-        self.assertFalse(
-            rights_manager.Actor(self.user_id_b).is_owner(self.EXP_ID))
-
-        self.assertFalse(
-            rights_manager.Actor(self.user_id_admin).is_owner(self.EXP_ID))
+        exp_rights = rights_manager.get_exploration_rights(self.EXP_ID)
+        self.assertTrue(exp_rights.is_owned_by(self.user_id_a))
+        self.assertFalse(exp_rights.is_owned_by(self.user_id_b))
+        self.assertFalse(exp_rights.is_owned_by(self.user_id_admin))
 
     def test_newly_created_exploration(self):
         exp = exp_domain.Exploration.create_default_exploration(

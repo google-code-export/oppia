@@ -126,6 +126,30 @@ class ExplorationRights(object):
                     self.viewer_ids),
             }
 
+    def can_generally_be_viewed_by(self, user_id):
+        """Whether this user has viewing rights for this exploration.
+
+        The user here is considered as a general user, without special
+        moderator or admin privileges.
+        """
+        return (self.status != EXPLORATION_STATUS_PRIVATE or
+                user_id in self.viewer_ids or
+                user_id in self.editor_ids or
+                user_id in self.owner_ids)
+
+    def can_generally_be_edited_by(self, user_id):
+        """Whether this user has editing rights for this exploration.
+
+        The user here is considered as a general user, without special
+        moderator or admin privileges.
+        """
+        return (self.community_owned or
+                user_id in self.editor_ids or
+                user_id in self.owner_ids)
+
+    def is_owned_by(self, user_id):
+        return user_id in self.owner_ids
+
 
 def _get_exploration_rights_from_model(exploration_rights_model):
     return ExplorationRights(
@@ -279,41 +303,6 @@ class Actor(object):
         return (self.is_admin() or
                 self.user_id in config_domain.MODERATOR_IDS.value)
 
-    def is_owner(self, exploration_id):
-        try:
-            exp_rights = get_exploration_rights(exploration_id)
-        except Exception:
-            return False
-
-        return (
-            exp_rights.community_owned or self.user_id in exp_rights.owner_ids)
-
-    def has_explicit_editing_rights(self, exploration_id):
-        """Whether this user has editing rights for this exploration.
-
-        This is true if the exploration is community-owned, or if the user is
-        in the owner/editor list for the exploration.
-        """
-        try:
-            exp_rights = get_exploration_rights(exploration_id)
-        except Exception:
-            return False
-
-        return (exp_rights.community_owned or
-                self.user_id in exp_rights.editor_ids or
-                self.user_id in exp_rights.owner_ids)
-
-    def has_explicit_viewing_rights(self, exploration_id):
-        try:
-            exp_rights = get_exploration_rights(exploration_id)
-        except Exception:
-            return False
-
-        return (exp_rights.status != EXPLORATION_STATUS_PRIVATE or
-                self.user_id in exp_rights.viewer_ids or
-                self.user_id in exp_rights.editor_ids or
-                self.user_id in exp_rights.owner_ids)
-
     def can_play(self, exploration_id):
         """Whether the user can play the reader view of this exploration."""
         try:
@@ -322,7 +311,7 @@ class Actor(object):
             return False
 
         if exp_rights.status == EXPLORATION_STATUS_PRIVATE:
-            return (self.has_explicit_viewing_rights(exploration_id)
+            return (exp_rights.can_generally_be_viewed_by(self.user_id)
                     or self.is_moderator())
         else:
             return True
@@ -336,7 +325,7 @@ class Actor(object):
         # rather than having this check in the controller.
         exp_rights = get_exploration_rights(exploration_id)
         return (
-            self.has_explicit_editing_rights(exploration_id) or (
+            exp_rights.can_generally_be_edited_by(self.user_id) or (
                 self.is_moderator() and
                 exp_rights.status != EXPLORATION_STATUS_PRIVATE
             )
@@ -353,7 +342,7 @@ class Actor(object):
 
         is_deleting_own_private_exploration = (
             exp_rights.status == EXPLORATION_STATUS_PRIVATE and
-            self.is_owner(exploration_id)
+            exp_rights.is_owned_by(self.user_id)
         )
 
         is_moderator_deleting_public_exploration = (
@@ -380,7 +369,7 @@ class Actor(object):
         if exp_rights.cloned_from:
             return False
 
-        return self.is_owner(exploration_id) or self.is_admin()
+        return exp_rights.is_owned_by(self.user_id) or self.is_admin()
 
     def can_unpublish(self, exploration_id):
         try:
@@ -402,7 +391,7 @@ class Actor(object):
 
         if exp_rights.community_owned or exp_rights.cloned_from:
             return False
-        return self.is_admin() or self.is_owner(exploration_id)
+        return self.is_admin() or exp_rights.is_owned_by(self.user_id)
 
     def can_release_ownership(self, exploration_id):
         try:
@@ -477,10 +466,10 @@ def assign_role(committer_id, exploration_id, assignee_id, new_role):
     old_role = ROLE_NONE
 
     if new_role == ROLE_OWNER:
-        if Actor(assignee_id).is_owner(exploration_id):
+        exp_rights = get_exploration_rights(exploration_id)
+        if exp_rights.is_owned_by(assignee_id):
             raise Exception('This user already owns this exploration.')
 
-        exp_rights = get_exploration_rights(exploration_id)
         exp_rights.owner_ids.append(assignee_id)
 
         if assignee_id in exp_rights.viewer_ids:
@@ -491,10 +480,10 @@ def assign_role(committer_id, exploration_id, assignee_id, new_role):
             old_role = ROLE_EDITOR
 
     elif new_role == ROLE_EDITOR:
-        if Actor(assignee_id).has_explicit_editing_rights(exploration_id):
+        exp_rights = get_exploration_rights(exploration_id)
+        if exp_rights.can_generally_be_edited_by(assignee_id):
             raise Exception('This user already can edit this exploration.')
 
-        exp_rights = get_exploration_rights(exploration_id)
         if exp_rights.community_owned:
             raise Exception(
                 'Community-owned explorations can be edited by anyone.')
@@ -506,13 +495,12 @@ def assign_role(committer_id, exploration_id, assignee_id, new_role):
             old_role = ROLE_VIEWER
 
     elif new_role == ROLE_VIEWER:
-        if Actor(assignee_id).has_explicit_viewing_rights(exploration_id):
+        exp_rights = get_exploration_rights(exploration_id)
+        if exp_rights.can_generally_be_viewed_by(assignee_id):
             raise Exception('This user already can view this exploration.')
 
-        exp_rights = get_exploration_rights(exploration_id)
         if exp_rights.status != EXPLORATION_STATUS_PRIVATE:
-            raise Exception(
-                'Public explorations can be viewed by anyone.')
+            raise Exception('Public explorations can be viewed by anyone.')
 
         exp_rights.viewer_ids.append(assignee_id)
 
