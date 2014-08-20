@@ -62,9 +62,13 @@ input.ng-dirty.ng-invalid {
 .table-striped > tbody > tr:nth-child(odd) > td,
 .table-striped > tbody > tr:nth-child(odd) > th {
    background-color: #f0f0f0;
- }
+}
 
- .oppia-serious-warning-text {
+.oppia-splash-page-text {
+  font-size: large;
+}
+
+.oppia-serious-warning-text {
    color: red;
  }
 

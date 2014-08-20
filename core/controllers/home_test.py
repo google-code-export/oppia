@@ -28,9 +28,8 @@ class HomePageTest(test_utils.GenericTestBase):
         self.assertEqual(response.status_int, 200)
         response.mustcontain(
             'Bite-sized learning journeys',
-            'Browse the explorations gallery', '100% free!',
-            'Learn', 'About', 'Contact',
-            'Login', 'Create an Oppia account', 'Contribute',
+            'View Gallery', '100% Free',
+            'Learn', 'About', 'Contact', 'Login', 'Contribute',
             # No navbar tabs should be highlighted.
             no=['class="active"',
                 'Profile', 'Logout', 'Create an exploration', 'Dashboard'])
@@ -48,7 +47,7 @@ class HomePageTest(test_utils.GenericTestBase):
         self.assertEqual(response.status_int, 200)
         response.mustcontain(
             'Bite-sized learning journeys',
-            'Contribute', 'Profile', 'Logout', 'Create an exploration',
+            'Contribute', 'Profile', 'Logout', 'Create Exploration',
             self.get_expected_logout_url('/'),
             no=['Login', 'Create an Oppia account', 'Dashboard',
                 self.get_expected_login_url('/')])
