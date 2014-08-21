@@ -5,7 +5,6 @@
 {% endblock subtitle %}
 
 {% block content %}
-  <div class="container">
     <div class="row oppia-splash-image-row">
       <div class="col-lg-12 col-md-12 col-sm-12">
         <img src="/images/banner.png" alt="{{BANNER_ALT_TEXT}}" class="oppia-splash-image">
@@ -19,10 +18,10 @@
       </div>
     </div>
 
-    <div class="row">
+    <div class="row oppia-splash-page-row odd">
       <div class="col-lg-6 col-md-6 col-sm-6">
-        <h3>Interactive</h3>
         <p class="oppia-splash-page-text">
+          <h3>Interactive</h3>
           Oppia strives to enable learning by doing. Research shows that students
           learn more effectively when they have an opportunity to demonstrate their
           understanding. With Oppia, you can create interactive content that makes
@@ -32,21 +31,21 @@
       <div class="col-lg-6 col-md-6 col-sm-6">
         <br><br><br>
         <div align="center">
-          SCREENSHOT
+          <img src="/images/interactive.png" />
         </div>
       </div>
     </div>
 
-    <div class="row">
+    <div class="row oppia-splash-page-row even">
       <div class="col-lg-6 col-md-6 col-sm-6">
         <br><br><br>
         <div align="center">
-          SCREENSHOT
+          <img src="/images/adaptive.png" />
         </div>
       </div>
       <div class="col-lg-6 col-md-6 col-sm-6">
-        <h3>Adaptive</h3>
         <p class="oppia-splash-page-text">
+          <h3>Adaptive</h3>
           Oppia explorations are designed to be non-linear: they can branch based
           on students' answers, resulting in tailored learning paths. It's just like
           any teacher/student conversation: what the teacher does is going to depend
@@ -55,10 +54,10 @@
       </div>
     </div>
     
-    <div class="row">
+    <div class="row oppia-splash-page-row odd">
       <div class="col-lg-6 col-md-6 col-sm-6">
-        <h3>Continuous Improvement</h3>
         <p class="oppia-splash-page-text">
+          <h3>Continuous Improvement</h3>
           You can create and publish an exploration in minutes using our online editor,
           get feedback from the community, and improve it continuously over time --
           there’s no need to create an entire <em>magnum opus</em> at the outset!
@@ -74,12 +73,12 @@
       <div class="col-lg-6 col-md-6 col-sm-6">
         <br><br><br>
         <div align="center">
-          SCREENSHOT
+          <img src="/images/improving.png" />
         </div>
       </div>
     </div>
 
-    <div class="row">
+    <div class="row oppia-splash-page-row even">
       <div class="col-lg-6 col-md-6 col-sm-6">
         <br><br><br>
         <div align="center">
@@ -88,8 +87,8 @@
       </div>
 
       <div class="col-lg-6 col-md-6 col-sm-6">
-        <h3>100% Free</h3>
         <p class="oppia-splash-page-text">
+          <h3>100% Free</h3>
           You don’t have to pay anything to use Oppia. In addition, all explorations
           on {{SITE_NAME}} are licensed under CC-BY-SA, which means that you can
           freely copy, modify and reuse their content.
@@ -114,7 +113,6 @@
         <a class="btn btn-primary btn-lg" href="/contribute">Create Exploration</a>
       </div>
     </div>
-  </div>
 {% endblock %}
 
 {% block footer_js %}

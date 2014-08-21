@@ -68,6 +68,17 @@ input.ng-dirty.ng-invalid {
   font-size: large;
 }
 
+.oppia-splash-page-row {
+  height: 400px;
+  padding-left: 50px;
+  padding-right: 50px;
+}
+
+.oppia-splash-page-row.even {
+  background-color: #fafafa;
+}
+
+
 .oppia-serious-warning-text {
    color: red;
  }
@@ -511,7 +522,6 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 
 .oppia-footer {
   border-top: 1pt solid #dde0FF;
-  bottom: 5px;
   height: 3em;
   margin-top: 30px;
   margin-bottom: 10px;
