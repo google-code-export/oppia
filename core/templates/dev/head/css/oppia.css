@@ -68,9 +68,13 @@ input.ng-dirty.ng-invalid {
   font-size: large;
 }
 
-.oppia-splash-page-row {
-  height: 400px;
+.oppia-splash-page-text-block {
   padding-left: 50px;
+}
+
+.oppia-splash-page-row {
+  height: 300px;
+  margin-top: 15px;
   padding-right: 50px;
 }
 
@@ -78,6 +82,20 @@ input.ng-dirty.ng-invalid {
   background-color: #fafafa;
 }
 
+.oppia-splash-page-screenshot {
+  height: 270px;
+  margin-top: 20px;
+  border: 1px solid #aaa;
+}
+
+.oppia-splash-page-hr {
+  width: 90%;
+}
+
+.oppia-splash-page-buttons {
+  margin: auto;
+  width: 90%;
+}
 
 .oppia-serious-warning-text {
    color: red;
