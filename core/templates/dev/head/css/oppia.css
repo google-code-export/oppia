@@ -220,7 +220,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .navbar-default .navbar-container {
-  background: #14C3A2;
+  background: #00A99D;
 }
 
 .navbar-default .dropdown-menu {
@@ -898,9 +898,10 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-background {
-  background: url(/images/banner.png) no-repeat;
+  background: url(/images/banner-tree.png) no-repeat;
   background-position: center;
 }
+
 @media (max-width: 800px) {
   .oppia-splash-background {
     background-size: cover;
