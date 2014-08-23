@@ -65,11 +65,19 @@ input.ng-dirty.ng-invalid {
 }
 
 .oppia-splash-page-text {
-  font-size: large;
+  font-size: 1.5em;
+}
+
+.oppia-splash-page-subheading {
+  color: white;
+  font-size: 3em;
 }
 
 .oppia-splash-page-text-block {
+  color: white;
+  margin: 200px auto;
   padding-left: 50px;
+  width: 600px;
 }
 
 .oppia-splash-page-row {
@@ -183,7 +191,6 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 
 .navbar-nav > li > a, .navbar .navbar-brand {
   color: white;
-  text-shadow: 0 1px 0 #092c66;
 }
 
 .navbar .navbar-brand {
@@ -213,9 +220,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .navbar-default .navbar-container {
-  background: #18447E;
-  border-bottom: 1pt solid #2f2f3f;
-  box-shadow: 0 1px 5px rgba(12,12,24, .3);
+  background: #14C3A2;
 }
 
 .navbar-default .dropdown-menu {
@@ -892,15 +897,50 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   margin-bottom: -5px;
 }
 
-.oppia-splash-image {
+.oppia-splash-background {
+  background: url(/images/banner.png) no-repeat;
+  background-position: center;
+}
+@media (max-width: 800px) {
+  .oppia-splash-background {
+    background-size: cover;
+  }
+}
+@media (min-width: 800px) {
+  .oppia-splash-background {
+    background-size: 100%;
+  }
+}
+/* This is needed for vertical alignment. */
+.oppia-splash-background-main-div {
+  display: table;
+  width: 100%;
+  height: 100%;
+}
+
+.oppia-splash-section {
+  display: table;
+  height: 600px;
+  margin: 0;
   width: 100%;
 }
 
-.oppia-splash p {
-  font-size: 1.4em;
-  margin-top: .5em;
-  padding-left: 10px;
-  padding-right: 10px;
+.oppia-vcenter {
+  display: table-cell;
+  float: none;
+  vertical-align: middle;
+}
+
+.oppia-splash-green {
+  background-color: #14C3A2;
+}
+
+.oppia-splash-blue {
+  background-color: #1BB8CE;
+}
+
+.oppia-splash-red {
+  background-color: #F17B68;
 }
 
 .oppia-splash .btn {
@@ -908,31 +948,9 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   display: block;
 }
 
-.oppia-splash-highlight {
-  padding: 10px 0;
-  background: #dde0FF;
-  margin-bottom: 20px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
 .help {
   font-size: .85em;
   color: #999;
-}
-
-.row {
-  margin-bottom: 10px;
-}
-
-#sample-exploration {
-  padding-left: 10px;
-  padding-right: 10px;
-}
-#sample-exploration iframe {
-  border: 2pt solid #dde0FF;
-  -webkit-border-radius: 20px;
-  border-radius: 20px;
 }
 
 .icon {

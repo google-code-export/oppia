@@ -5,98 +5,123 @@
 {% endblock subtitle %}
 
 {% block content %}
-    <div class="row oppia-splash-image-row">
-      <div class="col-lg-12 col-md-12 col-sm-12">
-        <img src="/images/banner.png" alt="{{BANNER_ALT_TEXT}}" class="oppia-splash-image">
-      </div>
-    </div>
-    <div class="row oppia-splash">
-      <div class="col-lg-12 col-md-12 col-sm-12">
-        <div class="oppia-align-center">
-          <h1>Bite-sized learning journeys, by anyone and for everyone</h1>
+  <script>
+    var resizeHeroImage = function() {
+      // Scale the hero unit's height to preserve its aspect ratio
+      // when the screen width is large; maintain a minimum width
+      // instead when the screen is small.
+      var HORIZONTAL_RESIZE_BREAK_POINT_PX = 800;
+      var HERO_UNIT_ASPECT_RATIO = 0.4;
+
+      var width = $('#heroUnit').width();
+      var widthToUseForScaling = Math.max(
+        HORIZONTAL_RESIZE_BREAK_POINT_PX, width)
+      $('#heroUnit').css(
+        'height', widthToUseForScaling * HERO_UNIT_ASPECT_RATIO);
+    };
+
+    window.addEventListener('resize', resizeHeroImage);
+    $(document).ready(resizeHeroImage);
+  </script>
+
+  <div id="heroUnit" class="oppia-splash-background">
+    <div class="row oppia-splash-background-main-div">
+      <div class="col-lg-12 col-md-12 col-sm-12 oppia-vcenter" align="center">
+        <h1>Bite-sized learning journeys</h1>
+        <h2>by anyone and for everyone</h2>
+        <br>
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-12 col-md-12 col-sm-12" align="center">
+              <a class="btn btn-primary btn-lg" href="/learn">View Gallery</a>
+              <a class="btn btn-primary btn-lg" href="/contribute">Create Exploration</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <hr class="oppia-splash-page-hr" />
+  <div class="row oppia-splash-section oppia-splash-blue">
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter">
+      <h3 class="oppia-splash-page-subheading">Interactive</h3>
+      <p class="oppia-splash-page-text">
+        Oppia strives to enable learning by doing. Research shows that students
+        learn more effectively when they have an opportunity to demonstrate their
+        understanding. With Oppia, you can create interactive content that makes
+        it easy for students to actively participate in the learning process.
+      </p>
+    </div>
 
-    <div class="row oppia-splash-page-row odd">
-      <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block">
-        <h3>Interactive</h3>
-        <p class="oppia-splash-page-text">
-          Oppia strives to enable learning by doing. Research shows that students
-          learn more effectively when they have an opportunity to demonstrate their
-          understanding. With Oppia, you can create interactive content that makes
-          it easy for students to actively participate in the learning process.
-        </p>
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter hidden-xs">
+      <div align="center">
+        <img src="/images/interactive.png" class="oppia-splash-page-screenshot">
       </div>
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <div align="center">
-          <img src="/images/interactive.png" class="oppia-splash-page-screenshot" />
-        </div>
+    </div>
+  </div>
+
+  <div class="row oppia-splash-section oppia-splash-red">
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter hidden-xs">
+      <div align="center">
+        <img src="/images/adaptive.png" class="oppia-splash-page-screenshot">
       </div>
     </div>
 
-    <div class="row oppia-splash-page-row even">
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <div align="center">
-          <img src="/images/adaptive.png" class="oppia-splash-page-screenshot" />
-        </div>
-      </div>
-      <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block">
-        <h3>Adaptive</h3>
-        <p class="oppia-splash-page-text">
-          Oppia explorations are designed to be non-linear: they can branch based
-          on students' answers, resulting in tailored learning paths. It's just like
-          any teacher/student conversation: what the teacher does is going to depend
-          on what the student says.
-        </p>
-      </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter">
+      <h3 class="oppia-splash-page-subheading">Adaptive</h3>
+      <p class="oppia-splash-page-text">
+        Oppia explorations are designed to be non-linear: they can branch based
+        on students' answers, resulting in tailored learning paths. It's just like
+        any teacher/student conversation: what the teacher does is going to depend
+        on what the student says.
+      </p>
     </div>
-    
-    <div class="row oppia-splash-page-row odd">
-      <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block">
-        <h3>Continuous Improvement</h3>
-        <p class="oppia-splash-page-text">
-          You can create and publish an exploration in minutes using our online editor. As students play through your exploration, you (or others,
-          if you like) can improve the exploration on the fly. Oppia enables this by providing insights about where and why students may be stumbling.
-        </p>
-      </div>
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <div align="center">
-          <img src="/images/improving.png" class="oppia-splash-page-screenshot" />
-        </div>
-      </div>
+  </div>
+
+  <div class="row oppia-splash-section oppia-splash-green">
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter">
+      <h3 class="oppia-splash-page-subheading">Continuous Improvement</h3>
+      <p class="oppia-splash-page-text">
+        You can create and publish an exploration in minutes using our online editor. As students play through your exploration, you (or others,
+        if you like) can improve the exploration on the fly. Oppia enables this by providing insights about where and why students may be stumbling.
+      </p>
     </div>
 
-    <div class="row oppia-splash-page-row even">
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <div align="center">
-          <img src="images/free.png" class="oppia-splash-page-screenshot" />
-        </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter hidden-xs">
+      <div align="center">
+        <img src="/images/improving.png" class="oppia-splash-page-screenshot">
       </div>
+    </div>
+  </div>
 
-      <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block">
-        <h3>100% Free</h3>
-        <p class="oppia-splash-page-text">
-          You don’t have to pay anything to use Oppia. In addition, all explorations
-          on {{SITE_NAME}} are licensed under CC-BY-SA, which means that you can
-          freely copy, modify and reuse their content. Also, the <a href="https://code.google.com/p/oppia">code behind {{SITE_NAME}}</a> is open source, and you are welcome to
-          download, reuse and modify it!
-        </p>
+  <div class="row oppia-splash-section oppia-splash-blue">
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter hidden-xs">
+      <div align="center">
+        <img src="/images/free.png" class="oppia-splash-page-screenshot">
       </div>
     </div>
 
-    <hr class="oppia-splash-page-hr" />
-
-    <div class="row oppia-splash oppia-splash-page-buttons">
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <a class="btn btn-primary btn-lg" href="/learn">View Gallery</a>
-      </div>
-      <div class="col-lg-6 col-md-6 col-sm-6">
-        <a class="btn btn-primary btn-lg" href="/contribute">Create Exploration</a>
-      </div>
+    <div class="col-lg-6 col-md-6 col-sm-6 oppia-splash-page-text-block oppia-vcenter">
+      <h3 class="oppia-splash-page-subheading">
+        100% Free
+      </h3>
+      <p class="oppia-splash-page-text">
+        You don’t have to pay anything to use Oppia. In addition, all explorations
+        on {{SITE_NAME}} are licensed under CC-BY-SA, which means that you can
+        freely copy, modify and reuse their content. Also, the <a href="https://code.google.com/p/oppia">code behind {{SITE_NAME}}</a> is open source, and you are welcome to
+        download, reuse and modify it!
+      </p>
     </div>
+  </div>
+
+  <div class="row oppia-splash oppia-splash-page-buttons">
+    <div class="col-lg-6 col-md-6 col-sm-6">
+      <a class="btn btn-primary btn-lg" href="/learn">View Gallery</a>
+    </div>
+    <div class="col-lg-6 col-md-6 col-sm-6">
+      <a class="btn btn-primary btn-lg" href="/contribute">Create Exploration</a>
+    </div>
+  </div>
 {% endblock %}
 
 {% block footer_js %}
