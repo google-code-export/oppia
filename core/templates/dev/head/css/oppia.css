@@ -124,7 +124,7 @@ input.ng-dirty.ng-invalid {
 }
 
 .oppia-splash-page-buttons .oppia-btn-splash {
-  border: 1px solid #eee;
+  border: 1px solid #e0e0e0;
   border-radius: 20px;
   width: 200px;
   margin: 0 10px;
@@ -231,7 +231,6 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .navbar .navbar-brand:hover,
 .navbar .navbar-brand:focus {
   color: white;
-  text-shadow: 0 1px 2px #000;
 }
 
 .navbar-brand sup {
