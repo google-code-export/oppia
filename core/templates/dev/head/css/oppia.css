@@ -112,10 +112,30 @@ input.ng-dirty.ng-invalid {
 }
 
 .oppia-splash-page-buttons {
-  margin: auto;
-  width: 90%;
+  display: table;
+  width: 100%;
+  height: 250px;
+  margin-left: 0;
 }
 
+.oppia-splash-page-buttons h3 {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+.oppia-splash-page-buttons .oppia-btn-splash {
+  border: 1px solid #eee;
+  border-radius: 20px;
+  width: 200px;
+  margin: 0 10px;
+  color: #888;
+}
+
+.oppia-splash-page-buttons .oppia-btn-splash:hover {
+  background-color: #05A69A;
+  color: #fff;
+}
+   
 .oppia-serious-warning-text {
    color: red;
  }
@@ -235,15 +255,18 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .navbar-default .dropdown-menu {
-  background: #18447E;
+  background: #fff;
 }
 
-.navbar-default .navbar-nav > li > a,
+.navbar-default .navbar-nav > li > a {
+  color: #fff;
+}
+
 .navbar-default .navbar-nav > li > a:hover,
 .navbar-default .navbar-nav .open > a:hover,
 .navbar-default .navbar-nav .open .dropdown-menu > li > a,
 .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover {
-  color: white;
+  color: #05A69A;
 }
 
 .navbar-default .navbar-nav > li > a:hover,
@@ -252,7 +275,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .navbar-default .navbar-nav .open > a:focus,
 .navbar-default .navbar-nav .open .dropdown-menu > li > a:hover,
 .navbar-default .navbar-nav .open .dropdown-menu > li > a:focus {
-  background: rgb(10, 48, 106);
+  background: #fff;
 }
 
 .navbar-default .navbar-nav > .open > a,
@@ -260,8 +283,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus {
-  background: rgb(10, 48, 106);
-  color: white;
+  color: #05A69A;
 }
 
 /* Show the navbar submenu dropdowns on-hover rather than on-click. */
@@ -269,11 +291,11 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   display: block;
 }
 .nav .dropdown:hover > .dropdown-menu > li > a {
-  color: white;
+  color: #05A69A;
 }
 .nav .dropdown:hover > .dropdown-menu > li > a:hover {
-  background: rgb(10, 48, 106);
-  color: white;
+  color: #888;
+  background-color: #eee;
 }
 
 .oppia-main-content {
@@ -555,7 +577,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-footer {
-  border-top: 1pt solid #dde0FF;
+  border-top: 1pt solid #eee;
   bottom: 5px;
   height: 3em;
   margin-top: 30px;
@@ -569,7 +591,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   list-style: none;
   margin-left: 0;
   margin-bottom: 0;
-  padding-top: 10px;
+  padding-top: 16px;
 }
 
 .oppia-footer-nav li {
@@ -578,6 +600,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 
 .oppia-footer-nav a {
   padding: 10px 20px 10px 0;
+  color: #666;
 }
 
 .oppia-footer-nav a:hover {
