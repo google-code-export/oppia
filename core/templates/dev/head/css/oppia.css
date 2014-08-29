@@ -283,7 +283,8 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .navbar-default .navbar-nav > .active > a,
 .navbar-default .navbar-nav > .active > a:hover,
 .navbar-default .navbar-nav > .active > a:focus {
-  color: #05A69A;
+  color: #fff;
+  background-color: #06b9ac;
 }
 
 /* Show the navbar submenu dropdowns on-hover rather than on-click. */
