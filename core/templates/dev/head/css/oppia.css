@@ -30,20 +30,40 @@ body {
 
 h1, h2 {
   color: #000;
+  line-height: 1.5;
+  font-family: "Capriola", "Roboto", "Arial", sans-serif;
+  margin-bottom: 18px;
 }
 
-h3 {
-  color: #222;
-  line-height: 1.1;
+h3, h4 {
+  color: #000;
+  font-family: "Roboto", "Arial", sans-serif;
+}
+
+h4 {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+p, li {
+  font-size: 16px;
+  font-family: "Roboto", "Arial", sans-serif;
+  font-weight: 400;
+  color: #333;
+  margin-bottom: 12px;
 }
 
 a {
-  color: #0844aa;
+  font-size: 16px;
+  font-family: "Roboto", "Arial", sans-serif;
+  font-weight: 400;
+  color: #05A69A;
   cursor: pointer;
 }
 
 a:hover {
-  color: #3f2c76;
+  color: #666;
 }
 
 .btn-primary {
@@ -77,17 +97,7 @@ input.ng-dirty.ng-invalid {
    background-color: #f0f0f0;
 }
 
-.oppia-splash-page-text {
-  font-size: 1.5em;
-}
-
-.oppia-splash-page-subheading {
-  color: white;
-  font-size: 3em;
-}
-
 .oppia-splash-page-text-block {
-  color: white;
   margin: 200px auto;
   padding-left: 50px;
   width: 600px;
@@ -120,11 +130,11 @@ input.ng-dirty.ng-invalid {
 }
 
 .oppia-splash-page-buttons .oppia-btn-splash {
-  border: 1px solid #e0e0e0;
+  border: 1px solid #ccc;
   border-radius: 20px;
   width: 200px;
   margin: 0 10px;
-  color: #888;
+  color: #666;
 }
 
 .oppia-splash-page-buttons .oppia-btn-splash:hover {
@@ -610,20 +620,21 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   width: 100%;
 }
 
-.oppia-wide-panel-content, .oppia-about {
-  font-size: large;
-  margin: 5px auto;
-  min-height: 400px;
-  padding: 20px;
-}
-
 .oppia-about {
   margin-top: 0;
 }
 
+.tabbable {
+  padding-top: 20px;
+}
+
+.tab-pane {
+  padding: 12px 0 40px 0;
+}
+
 .oppia-wide-panel-title {
   color: #062770;
-  font-family: verdana, arial, helvetica, sans-serif;
+  font-family: "Open Sans", sans-serif;
   font-size: 24pt;
   font-weight: bold;
   margin-bottom: 30px;
@@ -953,6 +964,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 
 .oppia-splash-background-main-div h1 {
   color: #fff;
+  font-family: "Capriola", "Open Sans", sans-serif;
 }
 
 .oppia-splash-background-main-div h3 {
