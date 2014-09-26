@@ -103,10 +103,6 @@ input.ng-dirty.ng-invalid {
   background-color: #fafafa;
 }
 
-.oppia-splash-page-screenshot {
-  height: 600px;
-}
-
 .oppia-splash-page-hr {
   width: 90%;
 }
