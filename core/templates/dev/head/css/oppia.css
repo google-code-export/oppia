@@ -96,9 +96,15 @@ input.ng-dirty.ng-invalid {
    background-color: #f0f0f0;
 }
 
-.oppia-splash-page-text-block {
+.oppia-splash-block-left {
   margin: 200px auto;
-  padding-left: 50px;
+  padding: 0 0 40px 50px;
+  width: 600px;
+}
+
+.oppia-splash-block-right {
+  margin: 200px auto;
+  padding: 0 0 40px 50px;
   width: 600px;
 }
 
@@ -956,9 +962,10 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 
 .oppia-splash-section {
   display: table;
-  height: 600px;
-  margin: 0;
   width: 100%;
+  margin: 0;
+  padding: 48px 200px;
+  background-color: #f1edea;
 }
 
 .oppia-vcenter {
@@ -968,8 +975,9 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-background {
-/*  background: url(/images/banner-tree.png) no-repeat;
-*/  background-position: center;
+  background: url(/images/mario-world.png) no-repeat;
+  background-position: center;
+  width: 100%;
 }
 
 .oppia-splash-brown {
