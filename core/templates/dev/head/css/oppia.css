@@ -932,9 +932,8 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-logo {
-  height: 32px;
-  margin-top: -10px;
-  margin-bottom: -5px;
+  height: 48px;
+  margin-top: -14px;
 }
 
 @media (max-width: 800px) {

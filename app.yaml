@@ -23,8 +23,8 @@ admin_console:
 
 handlers:
 - url: /favicon.ico
-  static_files: static/images/favicon.ico
-  upload: static/images/favicon.ico
+  static_files: static/images/logo/18x18_favicon_mint.png
+  upload: static/images/logo/18x18_favicon_mint.png
   secure: always
   http_headers:
     Cache-Control: 'public, max-age=2592000'
