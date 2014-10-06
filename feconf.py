@@ -88,12 +88,6 @@ ACCEPTED_IMAGE_FORMATS_AND_EXTENSIONS = {
 INTERACTIVE_PREFIX = 'interactive'
 NONINTERACTIVE_PREFIX = 'noninteractive'
 
-# The total number of non-interactive widgets. Used as a sanity check.
-NONINTERACTIVE_WIDGET_COUNT = 4
-# The total number of interactive widgets. Used as a sanity check.
-INTERACTIVE_WIDGET_COUNT = 12
-
-
 DEFAULT_EDITOR_PREREQUISITES_AGREEMENT = """
 I understand and agree that any contributions I make to this site will be
 licensed under CC-BY-SA v4.0, with a waiver of the attribution requirement. I
@@ -204,8 +198,11 @@ ALLOWED_WIDGETS = {
         'CodeRepl': {
             'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'CodeRepl')
         },
+        'CodeReplSuite': {
+            'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'CodeReplSuite')
+        },
         'LogicProof': {
-            'dir': 'extensions/widgets/interactive/LogicProof'
+            'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'LogicProof')
         },
         'MusicNotesInput': {
             'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'MusicNotesInput')

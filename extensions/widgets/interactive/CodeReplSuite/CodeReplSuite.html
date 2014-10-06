@@ -1,0 +1,30 @@
+<script type="text/ng-template" id="interactiveWidget/CodeReplSuite">
+  <div>
+    <div>
+      <em>Language: python</em>
+    </div>
+    <br>
+    <form ng-submit="runCode(code)">
+      <div ui-codemirror="{onLoad: initCodeEditor}" style="border: 1px solid black;">
+      </div>
+      <button type="submit" class="btn btn-default">Run</button>
+    </form>
+  </div>
+</script>
+
+<script type="text/ng-template" id="response/CodeReplSuite">
+  <div class="oppia-reader-response-container">
+    <span class="oppia-reader-response">
+      <textarea rows="10" class="oppia-code" style="font-size: smaller;"><[answer.code]></textarea>
+
+      <div ng-repeat="suite in answer.test_results track by $index">
+        Test suite <[$index]>:
+        <ul>
+          <li ng-repeat="classificationResult in suite track by $index">
+            <[classificationResult]>
+          </li>
+        </ul>
+      </div>
+    </span>
+  </div>
+</script>

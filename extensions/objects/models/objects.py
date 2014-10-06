@@ -202,6 +202,34 @@ class CodeEvaluation(BaseObject):
     }
 
 
+class CodeSuiteEvaluation(BaseObject):
+    """Evaluation result of programming code with test suites."""
+
+    description = 'Code and its evaluation results against a test suite.'
+
+    SCHEMA = {
+        'type': 'dict',
+        'properties': [{
+            'name': 'code',
+            'schema': UnicodeString.SCHEMA,
+        }, {
+            'name': 'test_results',
+            'schema': {
+                'type': 'list',
+                'items': {
+                    'type': 'list',
+                    'items': {
+                        # TODO(sll): In validation, check that this is a
+                        # valid classification choice (or 'error' or
+                        # 'timeout').
+                        'type': 'unicode',
+                    }
+                }
+            }
+        }]
+    }
+
+
 class CoordTwoDim(BaseObject):
     """2D coordinate class."""
 
