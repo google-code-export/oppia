@@ -29,14 +29,14 @@ body {
 }
 
 h1, h2 {
-  color: #000;
+  color: #534741;
   line-height: 1.5;
   font-family: "Capriola", "Roboto", "Arial", sans-serif;
   margin-bottom: 18px;
 }
 
 h3, h4 {
-  color: #000;
+  color: #534741;
   font-family: "Roboto", "Arial", sans-serif;
 }
 
@@ -975,8 +975,8 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-background {
-  background: url(/images/mario-world.png) no-repeat;
-  background-position: center;
+  background: url(/images/splash-01.png) no-repeat;
+  /*background-position: center;*/
   width: 100%;
 }
 
@@ -999,6 +999,17 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .oppia-splash .btn {
   margin-top: .5em;
   display: block;
+}
+
+.oppia-splash-credit {
+  font-size: 11px;
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+}
+
+.oppia-splash-credit a {
+  font-size: 11px;
 }
 
 .help {
