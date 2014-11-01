@@ -75,14 +75,15 @@ a:hover {
 
 .oppia-splash-btn {
   border: 1px solid #05A69A;
+  background-color: rgba(5, 166, 154, .7);
   border-radius: 20px;
   width: 200px;
   margin: 0 10px;
-  color: #05A69A;
+  color: #fff;
 }
 
 .oppia-splash-btn:hover {
-  background-color: #05A69A;
+  background-color: rgba(5, 166, 154, 1);
   color: #fff;
 }
 
@@ -96,37 +97,8 @@ input.ng-dirty.ng-invalid {
    background-color: #f0f0f0;
 }
 
-.oppia-splash-block-left {
-  margin: 200px auto;
-  padding: 0 0 40px 50px;
-  width: 600px;
-}
-
-.oppia-splash-block-right {
-  margin: 200px auto;
-  padding: 0 0 40px 50px;
-  width: 600px;
-}
-
-.oppia-splash-page-row {
-  height: 300px;
-  margin-top: 15px;
-  padding-right: 50px;
-}
-
-.oppia-splash-page-row.even {
-  background-color: #fafafa;
-}
-
 .oppia-splash-page-hr {
   width: 90%;
-}
-
-.oppia-splash-btn-section {
-  display: table;
-  width: 100%;
-  height: 300px;
-  margin-left: 0;
 }
 
 .oppia-splash-btn-row {
@@ -960,14 +932,6 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   margin-left: 0;
 }
 
-.oppia-splash-section {
-  display: table;
-  width: 100%;
-  margin: 0;
-  padding: 48px 200px;
-  background-color: #f1edea;
-}
-
 .oppia-vcenter {
   display: table-cell;
   float: none;
@@ -975,17 +939,51 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-background {
-  background: url(/images/splash-01.png) no-repeat;
-  /*background-position: center;*/
+  background: url(/images/splash-hero.png) no-repeat;
+  background-position: center top;
   width: 100%;
 }
 
-.oppia-splash-brown {
+.oppia-splash-page-row {
+  height: 300px;
+  margin-top: 15px;
+  padding-right: 50px;
+}
+
+.oppia-splash-section {
+  display: table;
+  width: 100%;
+  margin: 0;
+  padding: 48px 100px;
   background-color: #f1edea;
 }
 
+.oppia-splash-image {
+  width: 600px;
+}
+
+.oppia-splash-block-left {
+  margin: 200px auto;
+  padding: 0 0 40px 50px;
+  width: 600px;
+}
+
+.oppia-splash-block-right {
+  margin: 200px auto;
+  padding: 0 50px 40px 100px;
+}
+
+.oppia-splash-page-row.even {
+  background-color: #fafafa;
+}
+
+
+.oppia-splash-brown {
+  background-color: #E1D2CC;
+}
+
 .oppia-splash-green {
-  background-color: #7BAD64;
+  background-color: #05A69A;
 }
 
 .oppia-splash-blue {
@@ -993,7 +991,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-red {
-  background-color: #da554c;
+  background-color: #F35F55;
 }
 
 .oppia-splash .btn {
