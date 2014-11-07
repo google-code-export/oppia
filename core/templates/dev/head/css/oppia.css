@@ -939,7 +939,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 .oppia-splash-background {
-  background: url(/images/splash-hero.png) no-repeat;
+  background: url(/images/splash.png) no-repeat;
   background-position: center top;
   width: 100%;
 }
