@@ -942,6 +942,7 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
   background: url(/images/splash.png) no-repeat;
   background-position: center top;
   width: 100%;
+  min-height: 800px;
 }
 
 .oppia-splash-page-row {
@@ -953,9 +954,16 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 .oppia-splash-section {
   display: table;
   width: 100%;
+  min-height: 800px;
   margin: 0;
   padding: 48px 100px;
   background-color: #f1edea;
+}
+
+.oppia-splash-para {
+  max-width: 700px;
+  display: inline-block;
+  margin-bottom: 12px;
 }
 
 .oppia-splash-image {
@@ -978,21 +986,26 @@ div.wysiwyg, div.wysiwyg iframe.wysiwyg-content {
 }
 
 
-.oppia-splash-brown {
-  background-color: #E1D2CC;
-}
-
 .oppia-splash-green {
-  background-color: #05A69A;
+  background-color: rgba(5, 166, 154, 0.7);
 }
 
 .oppia-splash-blue {
-  background-color: #0BBCD5;
+  background-color: rgba(5, 140, 166, 0.8);
 }
 
 .oppia-splash-red {
-  background-color: #F35F55;
+  background-color: rgba(243, 95, 85, 0.8);
 }
+
+.oppia-splash-yellow {
+  background-color: rgba(247, 165, 65, 0.5);
+}
+
+.oppia-splash-gray {
+  background-color: rgba(96, 125, 139, 0.2);
+}
+
 
 .oppia-splash .btn {
   margin-top: .5em;
