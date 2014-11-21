@@ -213,6 +213,9 @@ ALLOWED_WIDGETS = {
         'GraphInput': {
             'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'GraphInput')
         },
+        'ChessInput': {
+            'dir': os.path.join(INTERACTIVE_WIDGETS_DIR, 'ChessInput')
+        },
     }
 }
 
