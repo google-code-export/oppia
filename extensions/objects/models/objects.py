@@ -516,3 +516,12 @@ class Graph(BaseObject):
             raise TypeError('Cannot convert to graph %s' % raw)
 
         return raw
+
+class Chess(BaseObject):
+    """A chess editor"""
+
+    description = 'A chess editor'
+    edit_html_filename = 'chess_editor'
+    edit_js_filename = 'ChessEditor'
+
+    SCHEMA = UnicodeString.SCHEMA

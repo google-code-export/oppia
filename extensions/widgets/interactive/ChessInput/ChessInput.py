@@ -7,7 +7,7 @@ class ChessInput(widget_domain.BaseWidget):
     name = 'Chess'
 
     # The category the widget falls under in the widget repository.
-    category = 'Basic Input'
+    category = 'Custom'
 
     # A description of the widget.
     description = (
@@ -52,7 +52,7 @@ class ChessInput(widget_domain.BaseWidget):
     # must have at least one of these. This attribute name MUST be prefixed by
     # '_'.
     _handlers = [{
-        'name': 'submit', 'obj_type': 'NormalizedString'
+        'name': 'submit', 'obj_type': 'Chess'
     }]
 
     # Additional JS library dependencies that should be loaded in pages

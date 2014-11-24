@@ -26,10 +26,16 @@ oppia.directive('oppiaInteractiveChessInput', [
       scope: {},
       templateUrl: 'interactiveWidget/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
+        $scope.onChange = function(oldPos, newPos) {
+          $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
+        };
+
         var cfg = {
           draggable: true,
-          position: 'start'
+          position: 'start',
+          onChange: $scope.onChange
         };
+
         var board = new ChessBoard('board', cfg);
 
         $scope.submitAnswer = function(answer) {
@@ -52,10 +58,16 @@ oppia.directive('oppiaResponseChessInput', [
       scope: {},
       templateUrl: 'interactiveWidget/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
+        $scope.onChange = function(oldPos, newPos) {
+          $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
+        };
+
         var cfg = {
           draggable: true,
-          position: 'start'
+          position: 'start',
+          onChange: $scope.onChange
         };
+        
         var board = new ChessBoard('board', cfg);
       }]
     };
