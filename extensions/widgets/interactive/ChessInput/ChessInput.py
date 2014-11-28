@@ -1,7 +1,7 @@
 from core.domain import widget_domain
 
 class ChessInput(widget_domain.BaseWidget):
-    """Interactive widget for entering text strings."""
+    """Interactive widget for entering chess positions"""
 
     # The human-readable name of the widget.
     name = 'Chess'
@@ -24,27 +24,13 @@ class ChessInput(widget_domain.BaseWidget):
     # TODO(sll): Migrate old definitions which still contain the 'columns'
     # parameter.
     _customization_arg_specs = [{
-        'name': 'placeholder',
-        'description': 'The placeholder for the text input field.',
+        'name': 'chess',
+        'description': 'Editor for chess answer',
         'schema': {
-            'type': 'unicode',
+            'type': 'custom',
+            'obj_type': 'Chess',
         },
         'default_value': 'Type your answer here.'
-    }, {
-        'name': 'rows',
-        'description': (
-            'How long the learner\'s answer is expected to be (in rows).'),
-        'schema': {
-            'type': 'int',
-            'validators': [{
-                'id': 'is_at_least',
-                'min_value': 1,
-            }, {
-                'id': 'is_at_most',
-                'max_value': 200,
-            }]
-        },
-        'default_value': 1,
     }]
 
     # Actions that the reader can perform on this widget which trigger a
@@ -58,4 +44,4 @@ class ChessInput(widget_domain.BaseWidget):
     # Additional JS library dependencies that should be loaded in pages
     # containing this widget. These should correspond to names of files in
     # feconf.DEPENDENCIES_TEMPLATES_DIR.
-    _dependency_ids = []
+    _dependency_ids = ['chessboard']
