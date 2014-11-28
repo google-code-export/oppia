@@ -10,18 +10,24 @@ oppia.directive('chessEditor', function($compile, warningsData) {
       scope: {},
       template: '<span ng-include="getTemplateUrl()"></span>',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        $scope.onChange = function(oldPos, newPos) {
-          $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
-        };
-
         var cfg = {
           draggable: true,
           position: 'start',
           onChange: $scope.onChange
         };
-        
-        var board = new ChessBoard('board', cfg);
+
         $scope.alwaysEditable = true;
+
+        // make sure the editor partial is loaded, then laod chess board js and css
+        $scope.$watch(
+          function() { return angular.element('#chess-editor-board').length },
+          function(newValue) {
+            if (newValue)
+              var board = new ChessBoard('chess-editor-board', cfg);
+          }
+        )
+
+        // scope.onsubmit
       }]
     };
   }
