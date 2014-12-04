@@ -107,12 +107,12 @@
                       </li>
                       {% if SHOW_FORUM_PAGE %}
                         <li {% if nav_mode == 'forum' %}class="active"{% endif %}>
-                          <a href="/forum">Forum</a>
+                          <a href="/forum"><['FORUM_TAB_NAME'|translate]></a>
                         </li>
                       {% endif %}
                       <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                          About
+                          <['ABOUT_TAB_NAME'|translate]>
                           <span class="caret"></span>
                         </a>
                         <ul class="dropdown-menu" role="menu">
@@ -228,6 +228,7 @@
 
     <script>
       {{ include_js_file('app.js') }}
+      {{ include_js_file('translations.js') }}
       {{ include_js_file('directives.js') }}
       {{ include_js_file('filters.js') }}
       {{ include_js_file('forms/formBuilder.js') }}
