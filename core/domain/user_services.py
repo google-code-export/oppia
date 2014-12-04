@@ -35,13 +35,15 @@ class UserSettings(object):
     """Value object representing a user's settings."""
     def __init__(
             self, user_id, email, username=None, last_agreed_to_terms=None,
-            last_started_state_editor_tutorial=None):
+            last_started_state_editor_tutorial=None,
+            preferred_language_code=None):
         self.user_id = user_id
         self.email = email
         self.username = username
         self.last_agreed_to_terms = last_agreed_to_terms
         self.last_started_state_editor_tutorial = (
             last_started_state_editor_tutorial)
+        self.preferred_language_code = preferred_language_code
 
     def validate(self):
         if not isinstance(self.user_id, basestring):
@@ -148,6 +150,7 @@ def get_users_settings(user_ids):
                 'admin', email=feconf.ADMIN_EMAIL_ADDRESS, username='admin',
                 last_agreed_to_terms=datetime.datetime.utcnow(),
                 last_started_state_editor_tutorial=None,
+                preferred_language_code=feconf.DEFAULT_LANGUAGE_CODE,
             ))
         elif model:
             result.append(UserSettings(
@@ -155,6 +158,7 @@ def get_users_settings(user_ids):
                 last_agreed_to_terms=model.last_agreed_to_terms,
                 last_started_state_editor_tutorial=(
                     model.last_started_state_editor_tutorial),
+                preferred_language_code=model.preferred_language_code,
             ))
         else:
             result.append(None)
@@ -180,7 +184,8 @@ def _save_user_settings(user_settings):
         normalized_username=user_settings.normalized_username,
         last_agreed_to_terms=user_settings.last_agreed_to_terms,
         last_started_state_editor_tutorial=(
-            user_settings.last_started_state_editor_tutorial)
+            user_settings.last_started_state_editor_tutorial),
+        preferred_language_code=user_settings.preferred_language_code,
     ).put()
 
 
@@ -276,4 +281,16 @@ def record_user_started_state_editor_tutorial(user_id):
     user_settings = get_user_settings(user_id, strict=True)
     user_settings.last_started_state_editor_tutorial = (
         datetime.datetime.utcnow())
+    _save_user_settings(user_settings)
+
+
+def save_preferred_language_code(user_id, new_language_code):
+    if all([
+            language['code'] != new_language_code
+            for language in feconf.ALL_LANGUAGE_CODES]):
+        raise utils.ValidationError(
+            'Invalid language code: %s' % new_language_code)
+
+    user_settings = get_user_settings(user_id, strict=True)
+    user_settings.preferred_language_code = new_language_code
     _save_user_settings(user_settings)

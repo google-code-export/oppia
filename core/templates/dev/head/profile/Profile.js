@@ -20,11 +20,19 @@
 
 oppia.controller('Profile', ['$scope', '$http', '$rootScope', function(
     $scope, $http, $rootScope) {
-  $scope.profileDataUrl = '/profilehandler/data/';
+  $scope.profileDataUrl = '/profilehandler/data';
   $rootScope.loadingMessage = 'Loading';
 
   // Retrieves profile data from the server.
   $http.get($scope.profileDataUrl).success(function(data) {
+    $scope.ALL_LANGUAGE_CODES = data.ALL_LANGUAGE_CODES;
+    $scope.preferredLanguageCode = data.preferred_language_code;
     $rootScope.loadingMessage = '';
   });
+
+  $scope.savePreferredLanguageCode = function() {
+    $http.post($scope.profileDataUrl, {
+      preferred_language_code: $scope.preferredLanguageCode
+    });
+  };
 }]);

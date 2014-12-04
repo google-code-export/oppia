@@ -48,10 +48,29 @@ class ProfilePage(base.BaseHandler):
 class ProfileHandler(base.BaseHandler):
     """Provides data for the profile page."""
 
+    PAGE_NAME_FOR_CSRF = 'profile'
+
     @base.require_user
     def get(self):
         """Handles GET requests."""
+        user_settings = user_services.get_user_settings(self.user_id)
+        self.values.update({
+            'ALL_LANGUAGE_CODES': feconf.ALL_LANGUAGE_CODES,
+            'preferred_language_code': user_settings.preferred_language_code,
+        })
         self.render_json(self.values)
+
+    @base.require_user
+    def post(self):
+        """Handles POST requests."""
+        preferred_language_code = self.payload.get('preferred_language_code')
+        try:
+            user_services.save_preferred_language_code(
+                self.user_id, preferred_language_code)
+        except utils.ValidationError as e:
+            raise self.InvalidInputException(e)
+
+        self.render_json({})
 
 
 class EditorPrerequisitesPage(base.BaseHandler):

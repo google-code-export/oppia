@@ -20,6 +20,7 @@ __author__ = 'Stephanie Federwisch'
 
 from core.platform import models
 (base_models,) = models.Registry.import_models([models.NAMES.base_model])
+import feconf
 
 from google.appengine.ext import ndb
 
@@ -40,6 +41,9 @@ class UserSettingsModel(base_models.BaseModel):
     last_agreed_to_terms = ndb.DateTimeProperty(default=None)
     # When the user last started the state editor tutorial. May be None.
     last_started_state_editor_tutorial = ndb.DateTimeProperty(default=None)
+    # The user's language preference.
+    preferred_language_code = ndb.StringProperty(
+        default=feconf.DEFAULT_LANGUAGE_CODE, indexed=True)
 
     @classmethod
     def is_normalized_username_taken(cls, normalized_username):
