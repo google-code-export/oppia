@@ -93,7 +93,7 @@ var expectContentTextToEqual = function(text) {
 
 // Additional arguments may be sent to this function, and they will be
 // passed on to the relevant widget editor.
-var selectInteraction = function(widgetName) {
+var setInteraction = function(widgetName) {
   element(by.css('.protractor-test-select-interaction-id')).
     element(by.css('option[value=' + widgetName + ']')).click();
 
@@ -129,10 +129,18 @@ var expectInteractionToMatch = function(widgetName) {
 // RULES
 
 // This function selects a rule for the current interaction and enters the
-// entries of the parameterValues array as its parameters.
-var _selectRule = function(ruleElement, widgetName, ruleName, parameterValues) {
+// entries of the parameterValues array as its parameters; the parameterValues
+// should be specified after the ruleName as additional arguments. For example
+// with widget 'NumericInput' and rule 'Equals' then there is a single
+// parameter which the given answer is required to equal.
+var _selectRule = function(ruleElement, widgetName, ruleName) {
+  var parameterValues = [];
+  for (var i = 3; i < arguments.length; i++) {
+    parameterValues.push(arguments[i]);
+  }
+
   var ruleDescription = rules.getDescription(
-    widgets.getInteractive(widgetName).submissionHandler, ruleName);
+    widgets.getInteractive(widgetName).answerObjectType, ruleName);
 
   var parameterStart = (ruleDescription.indexOf('{{') === -1) ?
     undefined : ruleDescription.indexOf('{{');
@@ -154,41 +162,49 @@ var _selectRule = function(ruleElement, widgetName, ruleName, parameterValues) {
         ruleDescription.indexOf('|', parameterStart) + 1, parameterEnd - 2));
     parameterStart = nextParameterStart;
   }
+
   expect(parameterValues.length).toEqual(parameterTypes.length);
 
   ruleElement.element(by.css('.protractor-test-rule-description')).click();
-  element(by.id('select2-drop')).element(
-      by.cssContainingText(
-        'li.select2-results-dept-0', ruleDescriptionInDropdown)).then(
-      function(optionElement) {
-    optionElement.click();
-    protractor.getInstance().waitForAngular();
 
-    // Now we enter the parameters
-    for (var i = 0; i < parameterValues.length; i++) {
-      var parameterElement = ruleElement.element(
-        by.repeater('item in ruleDescriptionFragments track by $index'
-      ).row(i * 2 + 1));
-      var parameterEditor = forms.getEditor(parameterTypes[i])(parameterElement);
-
-      if (widgetName === 'MultipleChoiceInput') {
-        // This is a special case as it uses a dropdown to set a NonnegativeInt
-        parameterElement.element(
-          by.cssContainingText('option', parameterValues[i])
-        ).click();
-      } else {
-        parameterEditor.setValue(parameterValues[i]);
-      }
-    }
+  element.all(by.id('select2-drop')).map(function(selectorElement) {
+    selectorElement.element(by.cssContainingText(
+      'li.select2-results-dept-0', ruleDescriptionInDropdown
+    )).then(function(optionElement) {
+      optionElement.click();
+      protractor.getInstance().waitForAngular();
+    });
   });
+
+  // Now we enter the parameters
+  for (var i = 0; i < parameterValues.length; i++) {
+    var parameterElement = ruleElement.element(
+      by.repeater('item in ruleDescriptionFragments track by $index'
+    ).row(i * 2 + 1));
+    var parameterEditor = forms.getEditor(parameterTypes[i])(parameterElement);
+
+    if (widgetName === 'MultipleChoiceInput') {
+      // This is a special case as it uses a dropdown to set a NonnegativeInt
+      parameterElement.element(
+        by.cssContainingText('option', parameterValues[i])
+      ).click();
+    } else {
+      parameterEditor.setValue(parameterValues[i]);
+    }
+  }
 };
 
 // This clicks the "add new rule" button and then selects the rule type and
-// enters its parameters, and closes the rule editor.
-var addRule = function(widgetName, ruleName, parameterValues) {
+// enters its parameters, and closes the rule editor. Any number of rule
+// parameters may be specified after the ruleName.
+var addRule = function(widgetName, ruleName) {
   element(by.css('.oppia-add-rule-button')).click();
-  var ruleElement = element(by.css('.protractor-test-temporary-rule'));
-  _selectRule(ruleElement, widgetName, ruleName, parameterValues);
+  var ruleElement = element(by.css('.protractor-test-temporary-rule'))
+  var args = [ruleElement];
+  for (var i = 0; i < arguments.length; i++) {
+    args.push(arguments[i]);
+  }
+  _selectRule.apply(null, args);
   ruleElement.element(by.css('.protractor-test-save-rule')).click();
 };
 
@@ -209,13 +225,20 @@ var RuleEditor = function(ruleNum) {
   });
 
   return {
-    setDescription: function(widgetName, ruleName, parameterValues) {
-      _selectRule(elem, widgetName, ruleName, parameterValues);
+    // Any number of parameters may be specified after the ruleName
+    setDescription: function(widgetName, ruleName) {
+      var args = [elem];
+      for (var i = 0; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      _selectRule.apply(null, args);
     },
-    editFeedback: function(index, richTextInstructions) {
-      richTextInstructions(
-        forms.ListEditor(elem.element(by.css('.oppia-feedback-bubble'))).
-          editItem(index, 'RichText'));
+    setFeedback: function(index, richTextInstructions) {
+      var feedbackEditor = forms.ListEditor(
+        elem.element(by.css('.oppia-feedback-bubble'))
+      ).editItem(index, 'RichText');
+      feedbackEditor.clear();
+      richTextInstructions(feedbackEditor);
     },
     addFeedback: function() {
       forms.ListEditor(elem.element(by.css('.oppia-feedback-bubble'))).
@@ -396,7 +419,7 @@ exports.expectCurrentStateToBe = expectCurrentStateToBe;
 exports.setContent = setContent;
 exports.expectContentToMatch = expectContentToMatch;
 
-exports.selectInteraction = selectInteraction;
+exports.setInteraction = setInteraction;
 exports.expectInteractionToMatch = expectInteractionToMatch;
 
 exports.addRule = addRule;

@@ -218,6 +218,10 @@ urls = [
         r'%s/<exploration_id>' % feconf.EXPLORATION_INIT_URL_PREFIX,
         reader.ExplorationHandler, 'exploration_handler'),
     get_redirect_route(
+        r'/explorehandler/exploration_start_event/<exploration_id>',
+        reader.ExplorationStartEventHandler,
+        'exploration_start_event_handler'),
+    get_redirect_route(
         r'/explorehandler/state_hit_event/<exploration_id>',
         reader.StateHitEventHandler, 'state_hit_event_handler'),
     get_redirect_route(
@@ -227,14 +231,11 @@ urls = [
         r'/explorehandler/give_feedback/<exploration_id>',
         reader.ReaderFeedbackHandler, 'reader_feedback_handler'),
     get_redirect_route(
-        r'/explorehandler/leave/<exploration_id>/<escaped_state_name>',
-        reader.ReaderLeaveHandler, 'reader_leave_handler'),
+        r'/explorehandler/exploration_maybe_leave_event/<exploration_id>',
+        reader.ExplorationMaybeLeaveHandler, 'reader_leave_handler'),
     get_redirect_route(
         r'/explorehandler/classify/<exploration_id>', reader.ClassifyHandler,
         'reader_classify_handler'),
-    get_redirect_route(
-        r'/explorehandler/next_state/<exploration_id>',
-        reader.NextStateHandler, 'reader_next_state_handler'),
 
     get_redirect_route(
         r'%s/<exploration_id>' % feconf.EDITOR_URL_PREFIX,
@@ -248,6 +249,9 @@ urls = [
     get_redirect_route(
         r'/createhandler/download/<exploration_id>',
         editor.ExplorationDownloadHandler, 'exploration_download_handler'),
+    get_redirect_route(
+        r'/createhandler/download_state/<exploration_id>',
+        editor.StateDownloadHandler, 'state_download_handler'),
     get_redirect_route(
         r'/createhandler/imageupload/<exploration_id>',
         editor.ImageUploadHandler, 'image_upload_handler'),
@@ -275,11 +279,6 @@ urls = [
     get_redirect_route(
         r'/createhandler/started_tutorial_event/<exploration_id>',
         editor.StartedTutorialEventHandler, 'started_tutorial_event_handler'),
-    # Temporary handlers to support preview mode.
-    # TODO(sll): Remove this once we have support for client-side expressions.
-    get_redirect_route(
-        r'/createhandler/init_exploration/<exploration_id>',
-        editor.InitExplorationHandler, 'editor_init_exploration_handler'),
 
     get_redirect_route(
         r'%s' % feconf.RECENT_COMMITS_DATA_URL,

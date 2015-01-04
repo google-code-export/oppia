@@ -21,9 +21,9 @@
 
 var forms = require('../../core/tests/protractor_utils/forms.js');
 
-// NOTE: all editors that have rules associated with them must implement a 
-// setValue() function to which a single argument can be sent that will 
-// completely determine the object.
+// NOTE: all editors for objects that are used as parameters in a rule must
+// implement a setValue() function to which a single argument can be sent
+// that will completely determine the object.
 
 var BooleanEditor = function(elem) {
   return {
@@ -33,6 +33,19 @@ var BooleanEditor = function(elem) {
           elem.element(by.tagName('input')).click();
         }
       });
+    }
+  };
+};
+
+var CoordTwoDim = function(elem) {
+  return {
+    // coordinates is a two-element list whose elements represent latitude and
+    // longitude respectively.
+    setValue: function(coordinates) {
+      elem.all(by.tagName('input')).first().clear();
+      elem.all(by.tagName('input')).first().sendKeys(coordinates[0]);
+      elem.all(by.tagName('input')).last().clear();
+      elem.all(by.tagName('input')).last().sendKeys(coordinates[1]);
     }
   };
 };
@@ -78,6 +91,15 @@ var NonnegativeIntEditor = function(elem) {
   };
 };
 
+var NormalizedStringEditor = function(elem) {
+  return {
+    setValue: function(value) {
+      elem.element(by.tagName('input')).clear();
+      elem.element(by.tagName('input')).sendKeys(value);
+    }
+  };
+};
+
 var SanitizedUrlEditor = function(elem) {
   return {
     setValue: function(text) {
@@ -98,18 +120,23 @@ var UnicodeStringEditor = function(elem) {
 
 var OBJECT_EDITORS = {
   'Boolean': BooleanEditor,
+  'CoordTwoDim': CoordTwoDim,
   'Filepath': FilepathEditor,
   'Int': IntEditor,
   'MathLatexString': MathLatexStringEditor,
   'NonnegativeInt': NonnegativeIntEditor,
+  'NormalizedString': NormalizedStringEditor,
   'SanitizedUrl': SanitizedUrlEditor,
   'UnicodeString': UnicodeStringEditor
 };
 
 exports.BooleanEditor = BooleanEditor;
+exports.CoordTwoDim = CoordTwoDim;
 exports.FilepathEditor = FilepathEditor;
 exports.IntEditor = IntEditor;
 exports.MathLatexStringEditor = MathLatexStringEditor;
+exports.NonnegativeIntEditor = NonnegativeIntEditor;
+exports.NormalizedStringEditor = NormalizedStringEditor;
 exports.SanitizedUrlEditor = SanitizedUrlEditor;
 exports.UnicodeStringEditor = UnicodeStringEditor;
 

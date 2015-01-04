@@ -56,7 +56,7 @@ var createAndPublishExploration = function(name, category, objective, language) 
   if (language) {
     editor.setLanguage(language);
   }
-  editor.selectInteraction('Continue');
+  editor.setInteraction('Continue');
   editor.saveChanges();
   publishExploration();
 };

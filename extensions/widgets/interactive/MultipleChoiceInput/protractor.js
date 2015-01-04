@@ -10,7 +10,7 @@
 // distributed under the License is distributed on an "AS-IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License. 
+// limitations under the License.
 
 /**
  * @fileoverview End-to-end testing utilities for the Multiple Choice
@@ -52,9 +52,26 @@ var submitAnswer = function(answer) {
     element(by.buttonText(answer)).click();
 };
 
-var submissionHandler = 'NonnegativeInt';
+var answerObjectType = 'NonnegativeInt';
+
+var testSuite = [{
+  interactionArguments: [[function(editor) {
+      editor.appendBoldText('right');
+    }, function(editor) {
+      editor.appendUnderlineText('wrong');
+    }]],
+  ruleArguments: ['Equals', ['right']],
+  expectedInteractionDetails: [[function(checker) {
+      checker.readBoldText('right');
+    }, function(checker) {
+      checker.readUnderlineText('wrong');
+    }]],
+  wrongAnswers: ['wrong'],
+  correctAnswers: ['right']
+}];
 
 exports.customizeInteraction = customizeInteraction;
 exports.expectInteractionDetailsToMatch = expectInteractionDetailsToMatch;
 exports.submitAnswer = submitAnswer;
-exports.submissionHandler = submissionHandler;
+exports.answerObjectType = answerObjectType;
+exports.testSuite = testSuite;
