@@ -25,12 +25,12 @@ class ChessInput(widget_domain.BaseWidget):
     # parameter.
     _customization_arg_specs = [{
         'name': 'chess',
-        'description': 'Editor for chess answer',
+        'description': 'Editor for the chess position you want to show the student',
         'schema': {
             'type': 'custom',
             'obj_type': 'Chess',
         },
-        'default_value': 'Type your answer here.'
+        'default_value': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
     }]
 
     # Actions that the reader can perform on this widget which trigger a

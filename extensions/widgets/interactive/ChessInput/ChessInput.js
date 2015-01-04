@@ -20,31 +20,26 @@
  * followed by the name of the arg.
  */
 oppia.directive('oppiaInteractiveChessInput', [
-  function() {
+  'oppiaHtmlEscaper', function(oppiaHtmlEscaper) {
     return {
       restrict: 'E',
       scope: {},
       templateUrl: 'interactiveWidget/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
         $scope.onChange = function(oldPos, newPos) {
-          $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
+          console.log(oldPos, newPos)
+          if (!$.isEmptyObject(oldPos)) { // do not fire on initialization
+            $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
+          }
         };
 
-        var cfg = {
+        var boardConfig = {
           draggable: true,
-          position: 'start',
           onChange: $scope.onChange
         };
-
-        var board = new ChessBoard('board', cfg);
-
-        $scope.submitAnswer = function(answer) {
-          if (!answer) {
-            return;
-          }
-
-          $scope.$parent.$parent.submitAnswer(answer, 'submit');
-        };
+        
+        var board = new ChessBoard('input-chess-board', boardConfig);
+        board.position(oppiaHtmlEscaper.escapedJsonToObj($attrs.chessWithValue));
       }]
     };
   }
@@ -52,23 +47,29 @@ oppia.directive('oppiaInteractiveChessInput', [
 
 
 oppia.directive('oppiaResponseChessInput', [
-  function() {
+  'oppiaHtmlEscaper', function(oppiaHtmlEscaper) {
     return {
       restrict: 'E',
       scope: {},
-      templateUrl: 'interactiveWidget/ChessInput',
+      templateUrl: 'response/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        $scope.onChange = function(oldPos, newPos) {
-          $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
-        };
+        console.log($scope)
+        $scope.answer = oppiaHtmlEscaper.escapedJsonToObj($attrs.answer);
 
-        var cfg = {
+        var boardConfig = {
           draggable: true,
-          position: 'start',
           onChange: $scope.onChange
         };
         
-        var board = new ChessBoard('board', cfg);
+        $scope.$watch( function() { // only render board once html is loaded
+            return angular.element('#response-board-' + $scope.$id).length
+          }, function(newValue, oldValue) {
+            if (newValue != 0) {
+              var board = new ChessBoard('response-board-' + $scope.$id, boardConfig);
+              board.position($scope.answer);
+            }
+          }
+        );
       }]
     };
   }

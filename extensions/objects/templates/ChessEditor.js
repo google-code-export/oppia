@@ -10,9 +10,16 @@ oppia.directive('chessEditor', function($compile, warningsData) {
       scope: {},
       template: '<span ng-include="getTemplateUrl()"></span>',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        var cfg = {
+        $scope.onChange = function(oldPos, newPos) {
+          $scope.$parent.value = ChessBoard.objToFen(newPos);
+          $scope.$apply();
+        };
+
+        var boardConfig = {
           draggable: true,
           position: 'start',
+          dropOffBoard: 'trash',
+          sparePieces: true,
           onChange: $scope.onChange
         };
 
@@ -23,11 +30,9 @@ oppia.directive('chessEditor', function($compile, warningsData) {
           function() { return angular.element('#chess-editor-board').length },
           function(newValue) {
             if (newValue)
-              var board = new ChessBoard('chess-editor-board', cfg);
+              var board = new ChessBoard('chess-editor-board', boardConfig);
           }
-        )
-
-        // scope.onsubmit
+        );
       }]
     };
   }
