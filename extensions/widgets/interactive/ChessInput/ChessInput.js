@@ -26,20 +26,43 @@ oppia.directive('oppiaInteractiveChessInput', [
       scope: {},
       templateUrl: 'interactiveWidget/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        $scope.onChange = function(oldPos, newPos) {
-          console.log(oldPos, newPos)
-          if (!$.isEmptyObject(oldPos)) { // do not fire on initialization
-            $scope.$parent.$parent.submitAnswer(ChessBoard.objToFen(newPos), 'submit');
+        // initialize chess object used to check for valid moves
+        position = oppiaHtmlEscaper.escapedJsonToObj($attrs.chessPositionWithValue)
+        chess = new Chess(position);
+        color = position.split(" ")[1];
+
+        $scope.onDrop = function(source, target, pc, newPos, oldPos, color) {
+          move = {from: source, to: target} // todo: deal with promotion
+          if (chess.move(move)) {
+            $scope.$parent.$parent.submitAnswer(chess.fen(), 'submit');
+          }
+          else {
+            return 'snapback';
+          }
+        };
+
+        $scope.onDragStart = function(source, piece, position) {
+          if (piece[0] != color) {
+            return False
           }
         };
 
         var boardConfig = {
           draggable: true,
-          onChange: $scope.onChange
+          onDrop: $scope.onDrop,
+          onDragStart: $scope.onDragStart
         };
         
-        var board = new ChessBoard('input-chess-board', boardConfig);
-        board.position(oppiaHtmlEscaper.escapedJsonToObj($attrs.chessWithValue));
+        $scope.$watch( function() { // only render board once html is loaded
+            return angular.element('#input-chess-board-' + $scope.$id).length
+          }, function(newValue, oldValue) {
+            if (newValue != 0) {
+              console.log("position: " + position)
+              var board = new ChessBoard('input-chess-board-' + $scope.$id, boardConfig);
+              board.position(position);
+            }
+          }
+        );
       }]
     };
   }
@@ -53,7 +76,6 @@ oppia.directive('oppiaResponseChessInput', [
       scope: {},
       templateUrl: 'response/ChessInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        console.log($scope)
         $scope.answer = oppiaHtmlEscaper.escapedJsonToObj($attrs.answer);
 
         var boardConfig = {

@@ -14,16 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Rules for Chess."""
+"""Rules for chess positions"""
 
 __author__ = 'Ashvin Nair'
 
 from extensions.rules import base
 
 
-class Equals(base.ChessRule):
-    description = 'is equal to {{x|Chess}}'
-    is_generic = False
+class Equals(base.ChessPositionRule):
+    description = 'is equal to {{x|ChessPosition}}'
+    is_generic = True
 
     def _evaluate(self, subject):
-        return subject.lower() == self.x.lower()
+        def get_board(fen_string):
+            return fen_string[:fen_string.index(" ")]
+
+        return get_board(subject) == get_board(self.x)
+
+class NotEquals(base.ChessPositionRule):
+    description = 'is not equal to {{x|ChessPosition}}'
+    is_generic = True
+
+    def _evaluate(self, subject):
+        def get_board(fen_string):
+            return fen_string[:fen_string.index(" ")]
+
+        return get_board(subject) != get_board(self.x)

@@ -24,13 +24,13 @@ class ChessInput(widget_domain.BaseWidget):
     # TODO(sll): Migrate old definitions which still contain the 'columns'
     # parameter.
     _customization_arg_specs = [{
-        'name': 'chess',
+        'name': 'chess_position',
         'description': 'Editor for the chess position you want to show the student',
         'schema': {
             'type': 'custom',
-            'obj_type': 'Chess',
+            'obj_type': 'ChessPosition',
         },
-        'default_value': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
+        'default_value': 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
     }]
 
     # Actions that the reader can perform on this widget which trigger a
@@ -38,7 +38,7 @@ class ChessInput(widget_domain.BaseWidget):
     # must have at least one of these. This attribute name MUST be prefixed by
     # '_'.
     _handlers = [{
-        'name': 'submit', 'obj_type': 'Chess'
+        'name': 'submit', 'obj_type': 'ChessPosition'
     }]
 
     # Additional JS library dependencies that should be loaded in pages

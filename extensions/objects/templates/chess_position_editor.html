@@ -1,0 +1,22 @@
+<div>
+  <div class="row">
+    <div id="chess-editor-board">
+    </div>
+
+    <div class="chess-settings">
+        <p>Choose board settings</p>
+        <select ng-model="properties.toMove">
+          <option value="w">White to move</option>
+          <option value="b">Black to move</option>
+        </select>
+
+        <br>
+
+        <input type="checkbox" ng-model="properties.whiteKingCastle"> White can castle kingside (0-0) <br>
+        <input type="checkbox" ng-model="properties.whiteQueenCastle"> White can castle queenside (0-0-0) <br>
+        <input type="checkbox" ng-model="properties.blackKingCastle"> Black can castle kingside (0-0) <br>
+        <input type="checkbox" ng-model="properties.blackQueenCastle"> Black can castle queenside (0-0-0)
+    </div>
+
+  </div>
+</div>

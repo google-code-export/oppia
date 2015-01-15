@@ -59,5 +59,5 @@ class CheckedProofRule(rule_domain.Rule):
 class GraphRule(rule_domain.Rule):
     subject_type = objects.Graph
 
-class ChessRule(rule_domain.Rule):
-    subject_type = objects.Chess
+class ChessPositionRule(rule_domain.Rule):
+    subject_type = objects.ChessPosition

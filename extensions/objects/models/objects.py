@@ -517,11 +517,14 @@ class Graph(BaseObject):
 
         return raw
 
-class Chess(BaseObject):
-    """A chess editor"""
+class ChessPosition(BaseObject):
+    """
+    A chess position, represented by a FEN string.
+    FEN format is described in http://en.wikipedia.org/wiki/FEN
+    """
 
-    description = 'A chess editor'
-    edit_html_filename = 'chess_editor'
-    edit_js_filename = 'ChessEditor'
+    description = 'A chess position'
+    edit_html_filename = 'chess_position_editor'
+    edit_js_filename = 'ChessPositionEditor'
 
     SCHEMA = UnicodeString.SCHEMA

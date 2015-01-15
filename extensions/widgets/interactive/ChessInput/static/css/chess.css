@@ -1,0 +1,16 @@
+.oppia-chess-board {
+    width: 400px;
+    height: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#chess-editor-board {
+    width: 400px;
+    float: left;
+}
+
+.chess-settings {
+    float: right;
+    margin-right: 10px;
+}
