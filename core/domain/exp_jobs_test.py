@@ -29,6 +29,7 @@ from core.tests import test_utils
 (job_models, exp_models,) = models.Registry.import_models([
    models.NAMES.job, models.NAMES.exploration])
 search_services = models.Registry.import_search_services()
+import feconf
 
 
 class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
@@ -57,7 +58,7 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
 
         self._run_batch_job_once_and_verify_output(
             exp_specs,
-            default_status=rights_manager.EXPLORATION_STATUS_PUBLICIZED)
+            default_status=feconf.ACTIVITY_STATUS_PUBLICIZED)
 
     def test_all_exps_public(self):
         """Test summary batch job if all explorations are public
@@ -77,26 +78,26 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
 
         self._run_batch_job_once_and_verify_output(
             exp_specs,
-            default_status=rights_manager.EXPLORATION_STATUS_PUBLIC)
+            default_status=feconf.ACTIVITY_STATUS_PUBLIC)
 
     def test_exps_some_publicized(self):
         """Test summary batch job if some explorations are publicized."""
 
         exp_specs = [
             {'category': 'Category A',
-             'status': rights_manager.EXPLORATION_STATUS_PUBLIC,
+             'status': feconf.ACTIVITY_STATUS_PUBLIC,
              'title': 'Title 1'},
             {'category': 'Category B',
-             'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+             'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
              'title': 'Title 2'},
             {'category': 'Category C',
-             'status': rights_manager.EXPLORATION_STATUS_PRIVATE,
+             'status': feconf.ACTIVITY_STATUS_PRIVATE,
              'title': 'Title 3'},
             {'category': 'Category A',
-             'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+             'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
              'title': 'Title 4'},
             {'category': 'Category C',
-             'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+             'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
              'title': 'Title 5'}]
 
         self._run_batch_job_once_and_verify_output(exp_specs)
@@ -105,7 +106,7 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
             self, exp_specs,
             default_title='A title',
             default_category='A category',
-            default_status=rights_manager.EXPLORATION_STATUS_PUBLICIZED):
+            default_status=feconf.ACTIVITY_STATUS_PUBLICIZED):
         """Run batch job for creating exploration summaries once and
          verify its output. exp_specs is a list of dicts with
          exploration specifications. Allowed keys are category,
@@ -154,10 +155,10 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                 exploration = exp_services.get_exploration_by_id(exp_id)
 
                 # publish or publicize exploration
-                if spec['status'] == rights_manager.EXPLORATION_STATUS_PUBLIC:
+                if spec['status'] == feconf.ACTIVITY_STATUS_PUBLIC:
                     rights_manager.publish_exploration(self.owner_id, exp_id)
                 elif (spec['status'] ==
-                        rights_manager.EXPLORATION_STATUS_PUBLICIZED):
+                        feconf.ACTIVITY_STATUS_PUBLICIZED):
                     rights_manager.publish_exploration(self.owner_id, exp_id)
                     rights_manager.publicize_exploration(self.owner_id, exp_id)
 

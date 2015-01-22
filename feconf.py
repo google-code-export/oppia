@@ -57,6 +57,11 @@ END_DEST = 'END'
 # The default number of items to show on a page in a paged view.
 DEFAULT_PAGE_SIZE = 50
 
+# Publication statuses of activities.
+ACTIVITY_STATUS_PRIVATE = 'private'
+ACTIVITY_STATUS_PUBLIC = 'public'
+ACTIVITY_STATUS_PUBLICIZED = 'publicized'
+
 # Default name for the initial state of an exploration.
 DEFAULT_INIT_STATE_NAME = 'First State'
 # The default content text for the initial state of an exploration.

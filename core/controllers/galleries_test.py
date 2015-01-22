@@ -67,7 +67,7 @@ class GalleryPageTest(test_utils.GenericTestBase):
             'title': 'Welcome to Oppia!',
             'language': 'English',
             'objective': 'become familiar with Oppia\'s capabilities',
-            'status': rights_manager.EXPLORATION_STATUS_PUBLIC,
+            'status': feconf.ACTIVITY_STATUS_PUBLIC,
         }, response_dict['public'][0])
 
         # Publicize the demo exploration.
@@ -106,7 +106,7 @@ class GalleryPageTest(test_utils.GenericTestBase):
             'title': 'A new title!',
             'language': 'English',
             'objective': 'become familiar with Oppia\'s capabilities',
-            'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+            'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
         }, response_dict['featured'][0])
 
     def test_gallery_handler_for_created_explorations(self):
@@ -163,7 +163,7 @@ class GalleryPageTest(test_utils.GenericTestBase):
             'title': 'Title A',
             'language': 'English',
             'objective': 'Objective A',
-            'status': rights_manager.EXPLORATION_STATUS_PUBLIC,
+            'status': feconf.ACTIVITY_STATUS_PUBLIC,
         }, response_dict['public'][0])
         self.assertDictContainsSubset({
             'id': 'B',
@@ -171,7 +171,7 @@ class GalleryPageTest(test_utils.GenericTestBase):
             'title': 'Title B',
             'language': 'English',
             'objective': 'Objective B',
-            'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+            'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
         }, response_dict['featured'][0])
 
         # Delete exploration A
@@ -187,7 +187,7 @@ class GalleryPageTest(test_utils.GenericTestBase):
             'title': 'Title B',
             'language': 'English',
             'objective': 'Objective B',
-            'status': rights_manager.EXPLORATION_STATUS_PUBLICIZED,
+            'status': feconf.ACTIVITY_STATUS_PUBLICIZED,
         }, response_dict['featured'][0])
 
     def test_new_exploration_ids(self):

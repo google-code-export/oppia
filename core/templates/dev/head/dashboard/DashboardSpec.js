@@ -25,6 +25,13 @@ describe('Dashboard controller', function() {
     var scope, ctrl, $httpBackend;
 
     beforeEach(inject(function(_$httpBackend_, $rootScope, $controller) {
+      if (!GLOBALS) {
+        GLOBALS = {};
+      }
+      GLOBALS.ACTIVITY_STATUS_PUBLIC = 'public';
+      GLOBALS.ACTIVITY_STATUS_PRIVATE = 'private';
+      GLOBALS.ACTIVITY_STATUS_PUBLICIZED = 'publicized';
+
       $httpBackend = _$httpBackend_;
       $httpBackend.expectGET('/dashboardhandler/data').respond({
         explorations: {

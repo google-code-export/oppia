@@ -42,10 +42,6 @@ CMD_CHANGE_EXPLORATION_STATUS = 'change_exploration_status'
 CMD_CHANGE_PRIVATE_VIEWABILITY = 'change_private_viewability'
 CMD_RELEASE_OWNERSHIP = 'release_ownership'
 
-EXPLORATION_STATUS_PRIVATE = 'private'
-EXPLORATION_STATUS_PUBLIC = 'public'
-EXPLORATION_STATUS_PUBLICIZED = 'publicized'
-
 ROLE_OWNER = 'owner'
 ROLE_EDITOR = 'editor'
 ROLE_VIEWER = 'viewer'
@@ -60,7 +56,7 @@ class ExplorationRights(object):
 
     def __init__(self, exploration_id, owner_ids, editor_ids, viewer_ids,
                  community_owned=False, cloned_from=None,
-                 status=EXPLORATION_STATUS_PRIVATE,
+                 status=feconf.ACTIVITY_STATUS_PRIVATE,
                  viewable_if_private=False):
         self.id = exploration_id
         self.owner_ids = owner_ids
@@ -85,11 +81,12 @@ class ExplorationRights(object):
                     'Community-owned explorations should have no owners, '
                     'editors or viewers specified.')
 
-        if self.community_owned and self.status == EXPLORATION_STATUS_PRIVATE:
+        if (self.community_owned and
+                self.status == feconf.ACTIVITY_STATUS_PRIVATE):
             raise utils.ValidationError(
                 'Community-owned explorations cannot be private.')
 
-        if self.status != EXPLORATION_STATUS_PRIVATE and self.viewer_ids:
+        if self.status != feconf.ACTIVITY_STATUS_PRIVATE and self.viewer_ids:
             raise utils.ValidationError(
                 'Public explorations should have no viewers specified.')
 
@@ -203,12 +200,12 @@ def get_exploration_rights(exploration_id):
 
 def is_exploration_private(exploration_id):
     exploration_rights = get_exploration_rights(exploration_id)
-    return exploration_rights.status == EXPLORATION_STATUS_PRIVATE
+    return exploration_rights.status == feconf.ACTIVITY_STATUS_PRIVATE
 
 
 def is_exploration_public(exploration_id):
     exploration_rights = get_exploration_rights(exploration_id)
-    return exploration_rights.status == EXPLORATION_STATUS_PUBLIC
+    return exploration_rights.status == feconf.ACTIVITY_STATUS_PUBLIC
 
 
 def is_exploration_cloned(exploration_id):
@@ -260,7 +257,7 @@ class Actor(object):
         except Exception:
             return False
 
-        return (exp_rights.status != EXPLORATION_STATUS_PRIVATE or
+        return (exp_rights.status != feconf.ACTIVITY_STATUS_PRIVATE or
                 self.user_id in exp_rights.viewer_ids or
                 self.user_id in exp_rights.editor_ids or
                 self.user_id in exp_rights.owner_ids)
@@ -272,7 +269,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status == EXPLORATION_STATUS_PRIVATE:
+        if exp_rights.status == feconf.ACTIVITY_STATUS_PRIVATE:
             return (self.has_explicit_viewing_rights(exploration_id)
                     or exp_rights.viewable_if_private
                     or self.is_moderator())
@@ -290,7 +287,7 @@ class Actor(object):
         return (
             self.has_explicit_editing_rights(exploration_id) or (
                 self.is_moderator() and
-                exp_rights.status != EXPLORATION_STATUS_PRIVATE
+                exp_rights.status != feconf.ACTIVITY_STATUS_PRIVATE
             )
         )
 
@@ -304,12 +301,12 @@ class Actor(object):
             return False
 
         is_deleting_own_private_exploration = (
-            exp_rights.status == EXPLORATION_STATUS_PRIVATE and
+            exp_rights.status == feconf.ACTIVITY_STATUS_PRIVATE and
             self.is_owner(exploration_id)
         )
 
         is_moderator_deleting_public_exploration = (
-            exp_rights.status == EXPLORATION_STATUS_PUBLIC and
+            exp_rights.status == feconf.ACTIVITY_STATUS_PUBLIC and
             self.is_moderator()
         )
 
@@ -333,7 +330,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status != EXPLORATION_STATUS_PRIVATE:
+        if exp_rights.status != feconf.ACTIVITY_STATUS_PRIVATE:
             return False
         if exp_rights.cloned_from:
             return False
@@ -346,7 +343,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status != EXPLORATION_STATUS_PUBLIC:
+        if exp_rights.status != feconf.ACTIVITY_STATUS_PUBLIC:
             return False
         if exp_rights.community_owned:
             return False
@@ -368,7 +365,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status == EXPLORATION_STATUS_PRIVATE:
+        if exp_rights.status == feconf.ACTIVITY_STATUS_PRIVATE:
             return False
         return self.can_modify_roles(exploration_id)
 
@@ -378,7 +375,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status == EXPLORATION_STATUS_PRIVATE:
+        if exp_rights.status == feconf.ACTIVITY_STATUS_PRIVATE:
             return self.can_edit(exploration_id)
         return True
 
@@ -394,7 +391,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status != EXPLORATION_STATUS_PUBLIC:
+        if exp_rights.status != feconf.ACTIVITY_STATUS_PUBLIC:
             return False
         return self.is_moderator()
 
@@ -404,7 +401,7 @@ class Actor(object):
         except Exception:
             return False
 
-        if exp_rights.status != EXPLORATION_STATUS_PUBLICIZED:
+        if exp_rights.status != feconf.ACTIVITY_STATUS_PUBLICIZED:
             return False
         return self.is_moderator()
 
@@ -469,7 +466,7 @@ def assign_role(committer_id, exploration_id, assignee_id, new_role):
             raise Exception('This user already can view this exploration.')
 
         exp_rights = get_exploration_rights(exploration_id)
-        if exp_rights.status != EXPLORATION_STATUS_PRIVATE:
+        if exp_rights.status != feconf.ACTIVITY_STATUS_PRIVATE:
             raise Exception(
                 'Public explorations can be viewed by anyone.')
 
@@ -541,7 +538,7 @@ def _change_exploration_status(
         'new_status': new_status
     }]
 
-    if new_status != EXPLORATION_STATUS_PRIVATE:
+    if new_status != feconf.ACTIVITY_STATUS_PRIVATE:
         exploration_rights.viewer_ids = []
 
     _save_exploration_rights(
@@ -596,7 +593,7 @@ def publish_exploration(committer_id, exploration_id):
         raise Exception('This exploration cannot be published.')
 
     _change_exploration_status(
-        committer_id, exploration_id, EXPLORATION_STATUS_PUBLIC,
+        committer_id, exploration_id, feconf.ACTIVITY_STATUS_PUBLIC,
         'Exploration published.')
 
 
@@ -609,7 +606,7 @@ def unpublish_exploration(committer_id, exploration_id):
         raise Exception('This exploration cannot be unpublished.')
 
     _change_exploration_status(
-        committer_id, exploration_id, EXPLORATION_STATUS_PRIVATE,
+        committer_id, exploration_id, feconf.ACTIVITY_STATUS_PRIVATE,
         'Exploration unpublished.')
 
 
@@ -626,7 +623,7 @@ def publicize_exploration(committer_id, exploration_id):
         raise Exception('This exploration cannot be marked as "featured".')
 
     _change_exploration_status(
-        committer_id, exploration_id, EXPLORATION_STATUS_PUBLICIZED,
+        committer_id, exploration_id, feconf.ACTIVITY_STATUS_PUBLICIZED,
         'Exploration publicized.')
 
 
@@ -639,5 +636,5 @@ def unpublicize_exploration(committer_id, exploration_id):
         raise Exception('This exploration cannot be unmarked as "featured".')
 
     _change_exploration_status(
-        committer_id, exploration_id, EXPLORATION_STATUS_PUBLIC,
+        committer_id, exploration_id, feconf.ACTIVITY_STATUS_PUBLIC,
         'Exploration unpublicized.')

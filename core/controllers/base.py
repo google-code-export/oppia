@@ -250,20 +250,17 @@ class BaseHandler(webapp2.RequestHandler):
             values = self.values
 
         values.update({
-            'DEV_MODE': feconf.DEV_MODE,
-            'INVALID_NAME_CHARS': feconf.INVALID_NAME_CHARS,
-            'EXPLORATION_STATUS_PRIVATE': (
-                rights_manager.EXPLORATION_STATUS_PRIVATE),
-            'EXPLORATION_STATUS_PUBLIC': (
-                rights_manager.EXPLORATION_STATUS_PUBLIC),
-            'EXPLORATION_STATUS_PUBLICIZED': (
-                rights_manager.EXPLORATION_STATUS_PUBLICIZED),
+            'ACTIVITY_STATUS_PRIVATE': feconf.ACTIVITY_STATUS_PRIVATE,
+            'ACTIVITY_STATUS_PUBLIC': feconf.ACTIVITY_STATUS_PUBLIC,
+            'ACTIVITY_STATUS_PUBLICIZED': feconf.ACTIVITY_STATUS_PUBLICIZED,
+            'ALL_LANGUAGE_CODES': feconf.ALL_LANGUAGE_CODES,
             'BEFORE_END_HEAD_TAG_HOOK': jinja2.utils.Markup(
                 BEFORE_END_HEAD_TAG_HOOK.value),
-            'FULL_SITE_URL': FULL_SITE_URL.value,
-            'SHOW_FORUM_PAGE': feconf.SHOW_FORUM_PAGE,
-            'ALL_LANGUAGE_CODES': feconf.ALL_LANGUAGE_CODES,
             'DEFAULT_LANGUAGE_CODE': feconf.ALL_LANGUAGE_CODES[0]['code'],
+            'DEV_MODE': feconf.DEV_MODE,
+            'FULL_SITE_URL': FULL_SITE_URL.value,
+            'INVALID_NAME_CHARS': feconf.INVALID_NAME_CHARS,
+            'SHOW_FORUM_PAGE': feconf.SHOW_FORUM_PAGE,
         })
 
         if self.user_id:

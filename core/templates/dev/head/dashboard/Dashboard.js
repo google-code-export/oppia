@@ -23,9 +23,6 @@ oppia.controller('Dashboard', [
     'createExplorationButtonService',
     function($scope, $http, $rootScope, warningsData, oppiaDatetimeFormatter,
              createExplorationButtonService) {
-  var EXPLORATION_STATUS_PRIVATE = 'private';
-  var EXPLORATION_STATUS_PUBLIC = 'public';
-  var EXPLORATION_STATUS_FEATURED = 'publicized';
   // TODO(sll): Consider replacing this with an actual list of categories when
   // we have found a way to do this that does not involve iterating through all
   // explorations.
@@ -85,11 +82,11 @@ oppia.controller('Dashboard', [
 
     for (var expId in $scope.explorations) {
       var status = $scope.explorations[expId].status;
-      if (status == EXPLORATION_STATUS_PRIVATE) {
+      if (status == GLOBALS.ACTIVITY_STATUS_PRIVATE) {
         $scope.privateExplorationIds.push(expId);
-      } else if (status == EXPLORATION_STATUS_PUBLIC) {
+      } else if (status == GLOBALS.ACTIVITY_STATUS_PUBLIC) {
         $scope.publicExplorationIds.push(expId);
-      } else if (status == EXPLORATION_STATUS_FEATURED) {
+      } else if (status == GLOBALS.ACTIVITY_STATUS_PUBLICIZED) {
         $scope.featuredExplorationIds.push(expId);
       } else {
         throw ('Error: Invalid exploration status ' + status);

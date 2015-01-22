@@ -1672,7 +1672,7 @@ class SearchTests(ExplorationServicesUnitTests):
             return rights_manager.ExplorationRights(
                 self.EXP_ID,
                 [self.OWNER_ID], [self.EDITOR_ID], [self.VIEWER_ID],
-                status=rights_manager.EXPLORATION_STATUS_PUBLICIZED
+                status=feconf.ACTIVITY_STATUS_PUBLICIZED
             )
 
         get_doc_counter = test_utils.CallCounter(mock_get_doc)
@@ -1701,7 +1701,7 @@ class SearchTests(ExplorationServicesUnitTests):
             return rights_manager.ExplorationRights(
                 self.EXP_ID,
                 [self.OWNER_ID], [self.EDITOR_ID], [self.VIEWER_ID],
-                status=rights_manager.EXPLORATION_STATUS_PRIVATE
+                status=feconf.ACTIVITY_STATUS_PRIVATE
             )
 
         delete_docs_counter = test_utils.CallCounter(mock_delete_docs)
@@ -1913,7 +1913,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
-                rights_manager.EXPLORATION_STATUS_PUBLIC,
+                feconf.ACTIVITY_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
                 actual_summaries[self.EXP_ID_2].exploration_model_last_updated
@@ -1940,7 +1940,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_1: exp_domain.ExplorationSummary(
                 self.EXP_ID_1, 'Exploration 1 title',
                 'A category', 'An objective', 'en', [],
-                rights_manager.EXPLORATION_STATUS_PRIVATE,
+                feconf.ACTIVITY_STATUS_PRIVATE,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_1,
                 actual_summaries[self.EXP_ID_1].exploration_model_created_on,
                 actual_summaries[self.EXP_ID_1].exploration_model_last_updated
@@ -1948,7 +1948,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
-                rights_manager.EXPLORATION_STATUS_PUBLIC,
+                feconf.ACTIVITY_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
                 actual_summaries[self.EXP_ID_2].exploration_model_last_updated
@@ -1980,7 +1980,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_1: exp_domain.ExplorationSummary(
                 self.EXP_ID_1, 'Exploration 1 title',
                 'A category', 'An objective', 'en', [],
-                rights_manager.EXPLORATION_STATUS_PRIVATE,
+                feconf.ACTIVITY_STATUS_PRIVATE,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_1,
                 actual_summaries[self.EXP_ID_1].exploration_model_created_on,
                 actual_summaries[self.EXP_ID_1].exploration_model_last_updated
@@ -2022,7 +2022,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
-                rights_manager.EXPLORATION_STATUS_PUBLIC,
+                feconf.ACTIVITY_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
                 actual_summaries[self.EXP_ID_2].exploration_model_last_updated

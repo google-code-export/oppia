@@ -524,7 +524,7 @@ def _save_exploration(
     if change_list is None:
         change_list = []
     exploration_rights = rights_manager.get_exploration_rights(exploration.id)
-    if exploration_rights.status != rights_manager.EXPLORATION_STATUS_PRIVATE:
+    if exploration_rights.status != feconf.ACTIVITY_STATUS_PRIVATE:
         exploration.validate(strict=True)
     else:
         exploration.validate()
@@ -841,7 +841,7 @@ def revert_exploration(
     exploration = get_exploration_by_id(
         exploration_id, version=revert_to_version)
     exploration_rights = rights_manager.get_exploration_rights(exploration.id)
-    if exploration_rights.status != rights_manager.EXPLORATION_STATUS_PRIVATE:
+    if exploration_rights.status != feconf.ACTIVITY_STATUS_PRIVATE:
         exploration.validate(strict=True)
     else:
         exploration.validate()
@@ -971,7 +971,8 @@ def get_next_page_of_all_commits(
 
 
 def get_next_page_of_all_non_private_commits(
-        page_size=feconf.DEFAULT_PAGE_SIZE, urlsafe_start_cursor=None, max_age=None):
+        page_size=feconf.DEFAULT_PAGE_SIZE, urlsafe_start_cursor=None,
+        max_age=None):
     """Returns a page of non-private commits in reverse time order. If max_age
     is given, it should be a datetime.timedelta instance.
 
@@ -981,7 +982,8 @@ def get_next_page_of_all_non_private_commits(
         https://developers.google.com/appengine/docs/python/ndb/queryclass
     """
     if max_age is not None and not isinstance(max_age, datetime.timedelta):
-        raise ValueError("max_age must be a datetime.timedelta instance. or None.")
+        raise ValueError(
+            "max_age must be a datetime.timedelta instance. or None.")
 
     results, new_urlsafe_start_cursor, more = (
         exp_models.ExplorationCommitLogEntryModel.get_all_non_private_commits(
@@ -998,14 +1000,14 @@ def get_next_page_of_all_non_private_commits(
 def _exp_rights_to_search_dict(rights):
     # Allow searches like "is:featured".
     doc = {}
-    if rights.status == rights_manager.EXPLORATION_STATUS_PUBLICIZED:
+    if rights.status == feconf.ACTIVITY_STATUS_PUBLICIZED:
         doc['is'] = 'featured'
     return doc
 
 
 def _should_index(exp):
     rights = rights_manager.get_exploration_rights(exp.id)
-    return rights.status != rights_manager.EXPLORATION_STATUS_PRIVATE
+    return rights.status != feconf.ACTIVITY_STATUS_PRIVATE
 
 
 def _exp_to_search_dict(exp):
@@ -1032,7 +1034,8 @@ def _exp_to_search_dict(exp):
 def index_explorations_given_domain_objects(exp_objects):
     search_docs = [_exp_to_search_dict(exp) for exp in exp_objects
                    if _should_index(exp)]
-    search_services.add_documents_to_index(search_docs, SEARCH_INDEX_EXPLORATIONS)
+    search_services.add_documents_to_index(
+        search_docs, SEARCH_INDEX_EXPLORATIONS)
 
 
 def index_explorations_given_ids(exp_ids):
@@ -1053,7 +1056,7 @@ def patch_exploration_search_document(exp_id, update):
 
 def update_exploration_status_in_search(exp_id):
     rights = rights_manager.get_exploration_rights(exp_id)
-    if rights.status == rights_manager.EXPLORATION_STATUS_PRIVATE:
+    if rights.status == feconf.ACTIVITY_STATUS_PRIVATE:
         search_services.delete_documents_from_index(
             [exp_id], SEARCH_INDEX_EXPLORATIONS)
     else:
@@ -1087,8 +1090,8 @@ def search_explorations(
     return search_services.search(
         query, SEARCH_INDEX_EXPLORATIONS, cursor, limit, sort, ids_only=True)
 
-# Temporary event handlers
 
+# Temporary event handlers
 def _handle_exp_change_event(exp_id):
     """Indexes the changed exploration."""
     index_explorations_given_ids([exp_id])

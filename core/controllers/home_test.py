@@ -99,7 +99,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PRIVATE)
+            feconf.ACTIVITY_STATUS_PRIVATE)
 
         rights_manager.publish_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
@@ -107,7 +107,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PUBLIC)
+            feconf.ACTIVITY_STATUS_PUBLIC)
 
         rights_manager.publicize_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
@@ -115,7 +115,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PUBLICIZED)
+            feconf.ACTIVITY_STATUS_PUBLICIZED)
         self.logout()
 
     def test_collaborators_can_see_explorations_on_dashboard(self):
@@ -132,7 +132,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PRIVATE)
+            feconf.ACTIVITY_STATUS_PRIVATE)
 
         rights_manager.publish_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
@@ -140,7 +140,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PUBLIC)
+            feconf.ACTIVITY_STATUS_PUBLIC)
 
         rights_manager.publicize_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
@@ -148,7 +148,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
         self.assertIn(self.EXP_ID, response['explorations'])
         self.assertEqual(
             response['explorations'][self.EXP_ID]['status'],
-            rights_manager.EXPLORATION_STATUS_PUBLICIZED)
+            feconf.ACTIVITY_STATUS_PUBLICIZED)
 
         self.logout()
 

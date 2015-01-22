@@ -139,10 +139,9 @@ class GalleryHandler(base.BaseHandler):
         featured_explorations_list = []
 
         for e_dict in explorations_list:
-            if e_dict['status'] == rights_manager.EXPLORATION_STATUS_PUBLIC:
+            if e_dict['status'] == feconf.ACTIVITY_STATUS_PUBLIC:
                 public_explorations_list.append(e_dict)
-            elif (e_dict['status'] ==
-                    rights_manager.EXPLORATION_STATUS_PUBLICIZED):
+            elif e_dict['status'] == feconf.ACTIVITY_STATUS_PUBLICIZED:
                 featured_explorations_list.append(e_dict)
 
         public_explorations_list = sorted(
