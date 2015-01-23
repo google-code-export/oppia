@@ -103,57 +103,56 @@ class GalleryHandler(base.BaseHandler):
         query_string = self.request.get('q')
         if query_string:
             # The user is performing a search.
-            exp_summaries_dict = (
-                exp_services.get_exploration_summaries_matching_query(
+            summaries_list = (
+                exp_services.get_activity_summaries_matching_query(
                     query_string))
         else:
-            # Get non-private exploration summaries
-            exp_summaries_dict = (
-                exp_services.get_non_private_exploration_summaries())
+            # Load the default version of the gallery.
+            summaries_list = (
+                exp_services.get_non_private_activity_summaries())
 
         # TODO(msl): Store 'is_editable' in exploration summary to avoid O(n)
         # individual lookups. Note that this will depend on user_id.
-        explorations_list = [{
-            'id': exp_summary.id,
-            'title': exp_summary.title,
-            'category': exp_summary.category,
-            'objective': exp_summary.objective,
+        activities_list = [{
+            'activity_type': summary.activity_type,
+            'id': summary.id,
+            'title': summary.title,
+            'category': summary.category,
+            'objective': summary.objective,
             'language': language_codes_to_short_descs.get(
-                exp_summary.language_code, exp_summary.language_code),
+                summary.language_code, summary.language_code),
             'last_updated': utils.get_time_in_millisecs(
-                exp_summary.exploration_model_last_updated),
-            'status': exp_summary.status,
-            'community_owned': exp_summary.community_owned,
-            'is_editable': exp_services.is_exp_summary_editable(
-                exp_summary,
-                user_id=self.user_id)
-        } for exp_summary in exp_summaries_dict.values()]
+                summary.activity_model_last_updated),
+            'status': summary.status,
+            'community_owned': summary.community_owned,
+            'is_editable': summary.is_editable_by(self.user_id)
+        } for summary in summaries_list]
 
-        if len(explorations_list) == feconf.DEFAULT_QUERY_LIMIT:
+        if len(activities_list) == feconf.DEFAULT_QUERY_LIMIT:
             logging.error(
-                '%s explorations were fetched to load the gallery page. '
+                '%s activities were fetched to load the gallery page. '
                 'You may be running up against the default query limits.'
                 % feconf.DEFAULT_QUERY_LIMIT)
 
-        public_explorations_list = []
-        featured_explorations_list = []
+        public_activities_list = []
+        featured_activities_list = []
 
-        for e_dict in explorations_list:
-            if e_dict['status'] == feconf.ACTIVITY_STATUS_PUBLIC:
-                public_explorations_list.append(e_dict)
-            elif e_dict['status'] == feconf.ACTIVITY_STATUS_PUBLICIZED:
-                featured_explorations_list.append(e_dict)
+        for a_dict in activities_list:
+            if a_dict['status'] == feconf.ACTIVITY_STATUS_PUBLIC:
+                public_activities_list.append(a_dict)
+            elif a_dict['status'] == feconf.ACTIVITY_STATUS_PUBLICIZED:
+                featured_activities_list.append(a_dict)
 
-        public_explorations_list = sorted(
-            public_explorations_list, key=lambda x: x['last_updated'],
+        public_activities_list = sorted(
+            public_activities_list, key=lambda x: x['last_updated'],
             reverse=True)
-        publicized_explorations_list = sorted(
-            featured_explorations_list, key=lambda x: x['last_updated'],
+        featured_activities_list = sorted(
+            featured_activities_list, key=lambda x: x['last_updated'],
             reverse=True)
 
         self.values.update({
-            'featured': publicized_explorations_list,
-            'public': public_explorations_list,
+            'featured': featured_activities_list,
+            'public': public_activities_list,
         })
         self.render_json(self.values)
 

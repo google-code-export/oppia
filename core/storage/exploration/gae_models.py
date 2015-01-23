@@ -27,6 +27,28 @@ import feconf
 from google.appengine.ext import ndb
 
 
+class AdventureSnapshotMetadataModel(base_models.BaseSnapshotMetadataModel):
+    """Storage model for the metadata for an adventure snapshot."""
+    pass
+
+
+class AdventureSnapshotContentModel(base_models.BaseSnapshotContentModel):
+    """Storage model for the content of an adventure snapshot."""
+    pass
+
+
+class AdventureRightsSnapshotMetadataModel(
+        base_models.BaseSnapshotMetadataModel):
+    """Storage model for the metadata for an adventure rights snapshot."""
+    pass
+
+
+class AdventureRightsSnapshotContentModel(
+        base_models.BaseSnapshotContentModel):
+    """Storage model for the content of an adventure rights snapshot."""
+    pass
+
+
 class ExplorationSnapshotMetadataModel(base_models.BaseSnapshotMetadataModel):
     """Storage model for the metadata for an exploration snapshot."""
     pass
@@ -37,7 +59,86 @@ class ExplorationSnapshotContentModel(base_models.BaseSnapshotContentModel):
     pass
 
 
-class ExplorationModel(base_models.VersionedModel):
+class ExplorationRightsSnapshotMetadataModel(
+        base_models.BaseSnapshotMetadataModel):
+    """Storage model for the metadata for an exploration rights snapshot."""
+    pass
+
+
+class ExplorationRightsSnapshotContentModel(
+        base_models.BaseSnapshotContentModel):
+    """Storage model for the content of an exploration rights snapshot."""
+    pass
+
+
+class _BaseActivityModel(base_models.VersionedModel):
+    """Versioned storage model for an Oppia activity.
+
+    This is an abstract base class for adventures and explorations.
+    """
+    ALLOW_REVERT = True
+
+    # The title of the activity.
+    title = ndb.StringProperty(required=True)
+    # The category of the activity (displayed in the gallery).
+    category = ndb.StringProperty(required=True, indexed=True)
+    # The objective of this activity.
+    objective = ndb.TextProperty(default='', indexed=False)
+    # The ISO 639-1 code for the language this activity is written in.
+    language_code = ndb.StringProperty(
+        default=feconf.DEFAULT_LANGUAGE_CODE, indexed=True)
+    # A blurb for this activity.
+    blurb = ndb.TextProperty(default='', indexed=False)
+
+
+class AdventureModel(_BaseActivityModel):
+    """Versioned storage model for an Oppia adventure."""
+    SNAPSHOT_METADATA_CLASS = AdventureSnapshotMetadataModel
+    SNAPSHOT_CONTENT_CLASS = AdventureSnapshotContentModel
+
+    # The id of the initial activity for this adventure.
+    entry_point_activity = ndb.StringProperty(required=True, indexed=True)
+    # A dict representing the specification of this adventure.
+    # TODO(sll): document this.
+    specification = ndb.JsonProperty(default={}, indexed=False)
+
+    def _trusted_commit(
+            self, committer_id, commit_type, commit_message, commit_cmds):
+        """Record the event to the commit log after the model commit.
+
+        Note that this extends the superclass method.
+        """
+        super(AdventureModel, self)._trusted_commit(
+            committer_id, commit_type, commit_message, commit_cmds)
+
+        committer_user_settings_model = (
+            user_models.UserSettingsModel.get_by_id(committer_id))
+        committer_username = (
+            committer_user_settings_model.username
+            if committer_user_settings_model else '')
+
+        rights = AdventureRightsModel.get_by_id(self.id)
+
+        # TODO(msl): test if put_async() leads to any problems (make
+        # sure summary dicts get updated correctly when adventures
+        # are changed)
+        AdventureCommitLogEntryModel(
+            id=('adventure-%s-%s' % (self.id, self.version)),
+            user_id=committer_id,
+            username=committer_username,
+            adventure_id=self.id,
+            commit_type=commit_type,
+            commit_message=commit_message,
+            commit_cmds=commit_cmds,
+            version=self.version,
+            post_commit_status=rights.status,
+            post_commit_community_owned=rights.community_owned,
+            post_commit_is_private=(
+                rights.status == feconf.ACTIVITY_STATUS_PRIVATE)
+        ).put_async()
+
+
+class ExplorationModel(_BaseActivityModel):
     """Versioned storage model for an Oppia exploration.
 
     This class should only be imported by the exploration domain file, the
@@ -45,21 +146,9 @@ class ExplorationModel(base_models.VersionedModel):
     """
     SNAPSHOT_METADATA_CLASS = ExplorationSnapshotMetadataModel
     SNAPSHOT_CONTENT_CLASS = ExplorationSnapshotContentModel
-    ALLOW_REVERT = True
 
-    # What this exploration is called.
-    title = ndb.StringProperty(required=True)
-    # The category this exploration belongs to.
-    category = ndb.StringProperty(required=True, indexed=True)
-    # The objective of this exploration.
-    objective = ndb.TextProperty(default='', indexed=False)
-    # The ISO 639-1 code for the language this exploration is written in.
-    language_code = ndb.StringProperty(
-        default=feconf.DEFAULT_LANGUAGE_CODE, indexed=True)
     # Skill tags associated with this exploration.
     skill_tags = ndb.StringProperty(repeated=True, indexed=True)
-    # A blurb for this exploration.
-    blurb = ndb.TextProperty(default='', indexed=False)
     # 'Author notes' for this exploration.
     author_notes = ndb.TextProperty(default='', indexed=False)
     # The default HTML template to use for displaying the exploration to the
@@ -83,11 +172,6 @@ class ExplorationModel(base_models.VersionedModel):
     def get_exploration_count(cls):
         """Returns the total number of explorations."""
         return cls.get_all().count()
-
-    def commit(self, committer_id, commit_message, commit_cmds):
-        """Updates the exploration using the properties dict, then saves it."""
-        super(ExplorationModel, self).commit(
-            committer_id, commit_message, commit_cmds)
 
     def _trusted_commit(
             self, committer_id, commit_type, commit_message, commit_cmds):
@@ -125,46 +209,28 @@ class ExplorationModel(base_models.VersionedModel):
         ).put_async()
 
 
-class ExplorationRightsSnapshotMetadataModel(
-        base_models.BaseSnapshotMetadataModel):
-    """Storage model for the metadata for an exploration rights snapshot."""
-    pass
+class _BaseActivityRightsModel(base_models.VersionedModel):
+    """Storage model for rights related to an activity.
 
-
-class ExplorationRightsSnapshotContentModel(
-        base_models.BaseSnapshotContentModel):
-    """Storage model for the content of an exploration rights snapshot."""
-    pass
-
-
-class ExplorationRightsModel(base_models.VersionedModel):
-    """Storage model for rights related to an exploration.
-
-    The id of each instance is the id of the corresponding exploration.
+    The id of each instance is the id of the corresponding activity.
     """
-
-    SNAPSHOT_METADATA_CLASS = ExplorationRightsSnapshotMetadataModel
-    SNAPSHOT_CONTENT_CLASS = ExplorationRightsSnapshotContentModel
     ALLOW_REVERT = False
 
-    # The user_ids of owners of this exploration.
+    # The user_ids of owners of this activity.
     owner_ids = ndb.StringProperty(indexed=True, repeated=True)
-    # The user_ids of users who are allowed to edit this exploration.
+    # The user_ids of users who are allowed to edit this activity.
     editor_ids = ndb.StringProperty(indexed=True, repeated=True)
-    # The user_ids of users who are allowed to view this exploration.
+    # The user_ids of users who are allowed to view this activity.
     viewer_ids = ndb.StringProperty(indexed=True, repeated=True)
 
-    # Whether this exploration is owned by the community.
+    # Whether this activity is editable by the community.
     community_owned = ndb.BooleanProperty(indexed=True, default=False)
-    # The exploration id which this exploration was cloned from. If None, this
-    # exploration was created from scratch.
-    cloned_from = ndb.StringProperty()
-    # For private explorations, whether this exploration can be viewed
-    # by anyone who has the URL. If the exploration is not private, this
+    # For private activities, whether this exploration can be viewed
+    # by anyone who has the URL. If the activity is not private, this
     # setting is ignored.
     viewable_if_private = ndb.BooleanProperty(indexed=True, default=False)
 
-    # The publication status of this exploration.
+    # The publication status of this activity.
     status = ndb.StringProperty(
         default=feconf.ACTIVITY_STATUS_PRIVATE, indexed=True,
         choices=[
@@ -174,9 +240,56 @@ class ExplorationRightsModel(base_models.VersionedModel):
         ]
     )
 
-    def save(self, committer_id, commit_message, commit_cmds):
-        super(ExplorationRightsModel, self).commit(
-            committer_id, commit_message, commit_cmds)
+
+class AdventureRightsModel(_BaseActivityRightsModel):
+    """Storage model for rights related to an adventure."""
+    SNAPSHOT_METADATA_CLASS = AdventureRightsSnapshotMetadataModel
+    SNAPSHOT_CONTENT_CLASS = AdventureRightsSnapshotContentModel
+
+    def _trusted_commit(
+            self, committer_id, commit_type, commit_message, commit_cmds):
+        """Record the event to the commit log after the model commit.
+
+        Note that this overrides the superclass method.
+        """
+        super(AdventureRightsModel, self)._trusted_commit(
+            committer_id, commit_type, commit_message, commit_cmds)
+
+        # Create and delete events will already be recorded in the
+        # AdventureModel.
+        if commit_type not in ['create', 'delete']:
+            committer_user_settings_model = (
+                user_models.UserSettingsModel.get_by_id(committer_id))
+            committer_username = (
+                committer_user_settings_model.username
+                if committer_user_settings_model else '')
+            # TODO(msl): test if put_async() leads to any problems (make
+            # sure summary dicts get updated correctly when explorations
+            # are changed)
+            AdventureCommitLogEntryModel(
+                id=('rights-%s-%s' % (self.id, self.version)),
+                user_id=committer_id,
+                username=committer_username,
+                adventure_id=self.id,
+                commit_type=commit_type,
+                commit_message=commit_message,
+                commit_cmds=commit_cmds,
+                version=None,
+                post_commit_status=self.status,
+                post_commit_community_owned=self.community_owned,
+                post_commit_is_private=(
+                    self.status == feconf.ACTIVITY_STATUS_PRIVATE)
+            ).put_async()
+
+
+class ExplorationRightsModel(_BaseActivityRightsModel):
+    """Storage model for rights related to an exploration."""
+    SNAPSHOT_METADATA_CLASS = ExplorationRightsSnapshotMetadataModel
+    SNAPSHOT_CONTENT_CLASS = ExplorationRightsSnapshotContentModel
+
+    # The exploration id which this exploration was cloned from. If None, this
+    # exploration was created from scratch.
+    cloned_from = ndb.StringProperty()
 
     def _trusted_commit(
             self, committer_id, commit_type, commit_message, commit_cmds):
@@ -214,14 +327,11 @@ class ExplorationRightsModel(base_models.VersionedModel):
             ).put_async()
 
 
-class ExplorationCommitLogEntryModel(base_models.BaseModel):
-    """Log of commits to explorations.
+class _BaseCommitLogEntryModel(base_models.BaseModel):
+    """Log of commits to activities.
 
     A new instance of this model is created and saved every time a commit to
-    ExplorationModel or ExplorationRightsModel occurs.
-
-    The id for this model is of the form
-    'exploration-{{EXP_ID}}-{{EXP_VERSION}}'.
+    an activity model or an activity-rights model occurs.
     """
     # Update superclass model to make these properties indexed.
     created_on = ndb.DateTimeProperty(auto_now_add=True, indexed=True)
@@ -231,32 +341,36 @@ class ExplorationCommitLogEntryModel(base_models.BaseModel):
     user_id = ndb.StringProperty(indexed=True, required=True)
     # The username of the user, at the time of the edit.
     username = ndb.StringProperty(indexed=True, required=True)
-    # The id of the exploration being edited.
-    exploration_id = ndb.StringProperty(indexed=True, required=True)
     # The type of the commit: 'create', 'revert', 'edit', 'delete'.
     commit_type = ndb.StringProperty(indexed=True, required=True)
     # The commit message.
     commit_message = ndb.TextProperty(indexed=False)
     # The commit_cmds dict for this commit.
     commit_cmds = ndb.JsonProperty(indexed=False, required=True)
-    # The version number of the exploration after this commit. Only populated
-    # for commits to an exploration (as opposed to its rights, etc.)
+    # The version number of the activity after this commit. Only populated
+    # for commits to the activity itself (as opposed to its rights, etc.)
     version = ndb.IntegerProperty()
 
-    # The status of the exploration after the edit event ('private', 'public',
-    # 'publicized').
-    post_commit_status = ndb.StringProperty(indexed=True, required=True)
-    # Whether the exploration is community-owned after the edit event.
+    # The status of the activity after the edit event.
+    post_commit_status = ndb.StringProperty(
+        indexed=True,
+        required=True,
+        choices=[
+            feconf.ACTIVITY_STATUS_PRIVATE,
+            feconf.ACTIVITY_STATUS_PUBLIC,
+            feconf.ACTIVITY_STATUS_PUBLICIZED,
+        ]
+    )
+    # Whether the activity is community-owned after the edit event.
     post_commit_community_owned = ndb.BooleanProperty(indexed=True)
-    # Whether the exploration is private after the edit event. Having a
-    # separate field for this makes queries faster, since an equality query
-    # on this property is faster than an inequality query on
-    # post_commit_status.
+    # Whether the activity is private after the edit event. Having a separate
+    # field for this makes queries faster, since an equality query on this
+    # property is faster than an inequality query on post_commit_status.
     post_commit_is_private = ndb.BooleanProperty(indexed=True)
 
     @classmethod
     def get_commit(cls, exploration_id, version):
-        return cls.get_by_id('exploration-%s-%s' % (exploration_id, version))
+        raise NotImplementedError
 
     @classmethod
     def get_all_commits(cls, page_size, urlsafe_start_cursor):
@@ -278,44 +392,85 @@ class ExplorationCommitLogEntryModel(base_models.BaseModel):
             query, page_size, urlsafe_start_cursor)
 
 
-class ExpSummaryModel(base_models.BaseModel):
-    """Summary model for an Oppia exploration.
+class AdventureCommitLogEntryModel(_BaseCommitLogEntryModel):
+    """Log of commits to adventures. A new instance of this model is created
+    and saved every time a commit to AdventureModel or AdventureRightsModel
+    occurs.
 
-    This should be used whenever the content blob of the exploration is not
-    needed (e.g. gallery, search, etc).
-
-    A ExpSummaryModel instance stores the following information:
-
-        id, title, category, objective, language_code, skill_tags,
-        last_updated, created_on, status (private, public or
-        publicized), community_owned, owner_ids, editor_ids,
-        viewer_ids, version.
-
-    The key of each instance is the exploration id.
+    The id for this model is of the form
+    'adventure-{{ADV_ID}}-{{ADV_VERSION}}'.
     """
+    # The id of the adventure being edited.
+    adventure_id = ndb.StringProperty(indexed=True, required=True)
 
-    # What this exploration is called.
-    title = ndb.StringProperty(required=True)
-    # The category this exploration belongs to.
+    @classmethod
+    def get_commit(cls, exploration_id, version):
+        return cls.get_by_id('exploration-%s-%s' % (exploration_id, version))
+
+
+class ExplorationCommitLogEntryModel(_BaseCommitLogEntryModel):
+    """Log of commits to explorations. A new instance of this model is created
+    and saved every time a commit to ExplorationModel or ExplorationRightsModel
+    occurs.
+
+    The id for this model is of the form
+    'exploration-{{EXP_ID}}-{{EXP_VERSION}}'.
+    """
+    # The id of the exploration being edited.
+    exploration_id = ndb.StringProperty(indexed=True, required=True)
+
+    @classmethod
+    def get_commit(cls, exploration_id, version):
+        return cls.get_by_id('exploration-%s-%s' % (exploration_id, version))
+
+
+class ActivitySummaryModel(base_models.BaseModel):
+    """Summary model for an Oppia activity.
+
+    These are used in contexts where the content blob of the activity is not
+    needed (e.g. gallery, search).
+
+    An ActivitySummaryModel instance stores the following information:
+
+        id, activity_type (exploration, adventure), activity_id, title,
+        category, objective, language_code, skill_tags, last_updated,
+        created_on, status (private, public or publicized), community_owned,
+        owner_ids, editor_ids, viewer_ids, version.
+
+    The id of each ActivitySummaryModel instance is:
+      - 'e:{{EXPLORATION_ID}}' for summaries corresponding to explorations
+      - 'a:{{ADVENTURE_ID}}' for summaries corresponding to adventures
+    """
+    # The type of the activity.
+    activity_type = ndb.StringProperty(required=True, choices=[
+        feconf.ACTIVITY_TYPE_ADVENTURE,
+        feconf.ACTIVITY_TYPE_EXPLORATION,
+    ], indexed=True)
+    # The id of the activity. This is different from the id of the
+    # ActivitySummaryModel instance.
+    activity_id = ndb.StringProperty(required=True, indexed=True)
+    # The title of the activity.
+    title = ndb.StringProperty(required=True, indexed=False)
+    # The gallery category that the activity belongs to.
     category = ndb.StringProperty(required=True, indexed=True)
-    # The objective of this exploration.
+    # The objective of the activity.
     objective = ndb.TextProperty(required=True, indexed=False)
-    # The ISO 639-1 code for the language this exploration is written in.
+    # The ISO 639-1 code for the language this activity is written in.
     language_code = ndb.StringProperty(
         required=True, indexed=True)
-    # Skill tags associated with this exploration.
+    # Skill tags associated with this activity.
     skill_tags = ndb.StringProperty(repeated=True, indexed=True)
 
-    # Time when the exploration model was last updated (not to be
-    # confused with last_updated, which is the time when the
-    # exploration *summary* model was last updated)
-    exploration_model_last_updated = ndb.DateTimeProperty(indexed=True)
-    # Time when the exploration model was created (not to be confused
-    # with created_on, which is the time when the exploration *summary*
-    # model was created)
-    exploration_model_created_on = ndb.DateTimeProperty(indexed=True)
+    # Time when the activity model was last updated (not to be
+    # confused with the 'last_updated' field for this instance, which is the
+    # time when the activity *summary* model was last updated).
+    activity_model_last_updated = ndb.DateTimeProperty(indexed=True)
+    # Time when the activity model was created (not to be confused
+    # with the 'created_on' field for this instance, which is the time when the
+    # activity *summary* model was created)
+    activity_model_created_on = ndb.DateTimeProperty(indexed=True)
 
-    # The publication status of this exploration.
+    # The publication status of this activity.
     status = ndb.StringProperty(
         default=feconf.ACTIVITY_STATUS_PRIVATE, indexed=True,
         choices=[
@@ -325,51 +480,51 @@ class ExpSummaryModel(base_models.BaseModel):
         ]
     )
 
-    # Whether this exploration is owned by the community.
+    # Whether this activity is owned by the community.
     community_owned = ndb.BooleanProperty(required=True, indexed=True)
 
-    # The user_ids of owners of this exploration.
+    # The user_ids of owners of this activity.
     owner_ids = ndb.StringProperty(indexed=True, repeated=True)
-    # The user_ids of users who are allowed to edit this exploration.
+    # The user_ids of users who are allowed to edit this activity.
     editor_ids = ndb.StringProperty(indexed=True, repeated=True)
-    # The user_ids of users who are allowed to view this exploration.
+    # The user_ids of users who are allowed to view this activity.
     viewer_ids = ndb.StringProperty(indexed=True, repeated=True)
-    # The version number of the exploration after this commit. Only populated
-    # for commits to an exploration (as opposed to its rights, etc.)
+    # The version number of the activity after this commit. Only populated
+    # for commits to an activity (as opposed to its rights, etc.)
     version = ndb.IntegerProperty()
+
+    _ACTIVITY_TYPE_TO_PREFIX = {
+        feconf.ACTIVITY_TYPE_EXPLORATION: 'e',
+        feconf.ACTIVITY_TYPE_ADVENTURE: 'a',
+    }
+
+    @classmethod
+    def get_instance_id(cls, activity_type, activity_id):
+        return '%s:%s' % (
+            cls._ACTIVITY_TYPE_TO_PREFIX[activity_type],
+            activity_id)
+
+    @classmethod
+    def get(cls, activity_type, activity_id):
+        instance_id = cls.get_instance_id(activity_type, activity_id)
+        return super(ActivitySummaryModel, cls).get(instance_id)
 
     @classmethod
     def get_non_private(cls):
-        """Returns an iterable with non-private exp summary models."""
-        return ExpSummaryModel.query().filter(
-            ExpSummaryModel.status != feconf.ACTIVITY_STATUS_PRIVATE
+        """Returns an iterable with non-private activity summary models."""
+        return cls.query().filter(
+            cls.status != feconf.ACTIVITY_STATUS_PRIVATE
         ).filter(
-            ExpSummaryModel.deleted == False
-        ).fetch(feconf.DEFAULT_QUERY_LIMIT)
-
-    @classmethod
-    def get_private_at_least_viewable(cls, user_id):
-        """Returns an iterable with private exp summaries that are at least
-        viewable by the given user.
-        """
-        return ExpSummaryModel.query().filter(
-            ExpSummaryModel.status == feconf.ACTIVITY_STATUS_PRIVATE
-        ).filter(
-            ndb.OR(ExpSummaryModel.owner_ids == user_id,
-                   ExpSummaryModel.editor_ids == user_id,
-                   ExpSummaryModel.viewer_ids == user_id)
-        ).filter(
-            ExpSummaryModel.deleted == False
+            cls.deleted == False
         ).fetch(feconf.DEFAULT_QUERY_LIMIT)
 
     @classmethod
     def get_at_least_editable(cls, user_id):
-        """Returns an iterable with exp summaries that are at least
+        """Returns an iterable with activity summaries that are at least
         editable by the given user.
         """
-        return ExpSummaryModel.query().filter(
-            ndb.OR(ExpSummaryModel.owner_ids == user_id,
-                   ExpSummaryModel.editor_ids == user_id)
+        return cls.query().filter(
+            ndb.OR(cls.owner_ids == user_id, cls.editor_ids == user_id)
         ).filter(
-            ExpSummaryModel.deleted == False
+            cls.deleted == False
         ).fetch(feconf.DEFAULT_QUERY_LIMIT)

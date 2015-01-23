@@ -57,6 +57,10 @@ END_DEST = 'END'
 # The default number of items to show on a page in a paged view.
 DEFAULT_PAGE_SIZE = 50
 
+# Types of activities.
+ACTIVITY_TYPE_ADVENTURE = 'adventure'
+ACTIVITY_TYPE_EXPLORATION = 'exploration'
+
 # Publication statuses of activities.
 ACTIVITY_STATUS_PRIVATE = 'private'
 ACTIVITY_STATUS_PUBLIC = 'public'

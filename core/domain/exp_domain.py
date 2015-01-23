@@ -1438,15 +1438,18 @@ class Exploration(object):
             state.interaction.id for state in self.states.values()]))
 
 
-class ExplorationSummary(object):
-    """Domain object for an Oppia exploration summary."""
+class ActivitySummary(object):
+    """Domain object for an Oppia activity summary.
 
-    def __init__(self, exploration_id, title, category, objective,
-                 language_code, skill_tags, status,
-                 community_owned, owner_ids, editor_ids,
-                 viewer_ids, version, exploration_model_created_on,
-                 exploration_model_last_updated):
-        self.id = exploration_id
+    Note that ActivitySummary objects are uniquely identified by the 2-tuple
+    (activity_type, activity_id). The activity_id alone is not sufficient.
+    """
+    def __init__(self, activity_type, activity_id, title, category,
+                 objective, language_code, skill_tags, status,
+                 community_owned, owner_ids, editor_ids, viewer_ids, version,
+                 activity_model_created_on, activity_model_last_updated):
+        self.activity_type = activity_type
+        self.id = activity_id
         self.title = title
         self.category = category
         self.objective = objective
@@ -1458,5 +1461,13 @@ class ExplorationSummary(object):
         self.editor_ids = editor_ids
         self.viewer_ids = viewer_ids
         self.version = version
-        self.exploration_model_created_on = exploration_model_created_on
-        self.exploration_model_last_updated = exploration_model_last_updated
+        self.activity_model_created_on = activity_model_created_on
+        self.activity_model_last_updated = activity_model_last_updated
+
+    def is_editable_by(self, user_id):
+        """Checks if a given user may edit the activity corresponding to this
+        summary. Note that the given user_id may be None.
+        """
+        return user_id is not None and (
+            user_id in self.editor_ids or user_id in self.owner_ids
+            or self.community_owned)

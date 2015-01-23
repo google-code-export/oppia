@@ -77,8 +77,8 @@ class GalleryPageTest(test_utils.GenericTestBase):
         # This is not necessary, but serves as additional check that
         # the migration job works well and gives correct galleries.
         self.process_and_flush_pending_tasks()
-        job_id = (exp_jobs.ExpSummariesCreationOneOffJob.create_new())
-        exp_jobs.ExpSummariesCreationOneOffJob.enqueue(job_id)
+        job_id = (exp_jobs.ActivitySummariesCreationOneOffJob.create_new())
+        exp_jobs.ActivitySummariesCreationOneOffJob.enqueue(job_id)
         self.assertGreaterEqual(self.count_jobs_in_taskqueue(), 1)
         self.process_and_flush_pending_tasks()
         self.assertEqual(self.count_jobs_in_taskqueue(), 0)

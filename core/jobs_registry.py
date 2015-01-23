@@ -27,7 +27,7 @@ from core.domain import user_jobs
 ONE_OFF_JOB_MANAGERS = [
     user_jobs.DashboardSubscriptionsOneOffJob,
     exp_jobs.IndexAllExplorationsJobManager,
-    exp_jobs.ExpSummariesCreationOneOffJob,
+    exp_jobs.ActivitySummariesCreationOneOffJob,
     exp_jobs.ExplorationValidityJobManager,
     exp_jobs.ParameterDiscoveryJobManager]
 
@@ -35,9 +35,10 @@ ONE_OFF_JOB_MANAGERS = [
 # admin dashboard.
 # NOTE TO DEVELOPERS: When a new ContinuousComputation manager is defined,
 # it should be registered here.
-ALL_CONTINUOUS_COMPUTATION_MANAGERS = [stats_jobs.StatisticsAggregator,
-                                       user_jobs.DashboardRecentUpdatesAggregator
-                                       ]
+ALL_CONTINUOUS_COMPUTATION_MANAGERS = [
+    stats_jobs.StatisticsAggregator,
+    user_jobs.DashboardRecentUpdatesAggregator]
+
 
 class ContinuousComputationEventDispatcher(object):
     """Dispatches events to the relevant ContinuousComputation classes."""

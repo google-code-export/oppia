@@ -32,10 +32,11 @@ search_services = models.Registry.import_search_services()
 import feconf
 
 
-class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
+class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
     """Tests for ExpSummary aggregations."""
 
-    ONE_OFF_JOB_MANAGERS_FOR_TESTS = [exp_jobs.ExpSummariesCreationOneOffJob]
+    ONE_OFF_JOB_MANAGERS_FOR_TESTS = [
+        exp_jobs.ActivitySummariesCreationOneOffJob]
 
     def test_all_exps_publicized(self):
         """Test exploration summary batch job if all explorations are
@@ -141,7 +142,7 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
 
             # get dummy explorations
             num_exps = len(exp_specs)
-            expected_job_output = {}
+            expected_summaries = []
 
             for ind in range(num_exps):
                 exp_id = str(ind)
@@ -169,12 +170,11 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                     exp_id)
 
                 exploration = exp_services.get_exploration_by_id(exp_id)
-                exploration_model_last_updated = exploration.last_updated
-                exploration_model_created_on = exploration.created_on
 
                 # manually create the expectated summary specifying title,
                 # category, etc
-                expected_job_output[exp_id] = exp_domain.ExplorationSummary(
+                summary = exp_domain.ActivitySummary(
+                    feconf.ACTIVITY_TYPE_EXPLORATION,
                     exp_id,
                     spec['title'],
                     spec['category'],
@@ -187,8 +187,8 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                     exp_rights_model.editor_ids,
                     exp_rights_model.viewer_ids,
                     exploration.version,
-                    exploration_model_created_on,
-                    exploration_model_last_updated)
+                    exploration.created_on,
+                    exploration.last_updated)
 
                 # calling constructor for fields that are not required
                 # and have no default value does not work b/c
@@ -196,43 +196,43 @@ class ExpSummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                 # expected_job_output but will be unspecified in
                 # actual_job_output
                 if exploration.skill_tags:
-                    expected_job_output[exp_id].skill_tags = (
-                        exploration.skill_tags)
+                    summary.skill_tags = exploration.skill_tags
                 if exp_rights_model.owner_ids:
-                    expected_job_output[exp_id].owner_ids = (
-                        exp_rights_model.owner_ids)
+                    summary.owner_ids = exp_rights_model.owner_ids
                 if exp_rights_model.editor_ids:
-                    expected_job_output[exp_id].editor_ids = (
-                        exp_rights_model.editor_ids)
+                    summary.editor_ids = exp_rights_model.editor_ids
                 if exp_rights_model.viewer_ids:
-                    expected_job_output[exp_id].viewer_ids = (
-                        exp_rights_model.viewer_ids)
+                    summary.viewer_ids = exp_rights_model.viewer_ids
                 if exploration.version:
-                    expected_job_output[exp_id].version = (
-                        exploration.version)
+                    summary.version = exploration.version
+
+                expected_summaries.append(summary)
 
             # run batch job
-            job_id = exp_jobs.ExpSummariesCreationOneOffJob.create_new()
-            exp_jobs.ExpSummariesCreationOneOffJob.enqueue(job_id)
+            job_id = exp_jobs.ActivitySummariesCreationOneOffJob.create_new()
+            exp_jobs.ActivitySummariesCreationOneOffJob.enqueue(job_id)
             self.process_and_flush_pending_tasks()
 
             # get job output
-            actual_job_output = exp_services.get_all_exploration_summaries()
+            actual_summaries = exp_services.get_all_activity_summaries()
 
             # check job output
-            self.assertEqual(actual_job_output.keys(),
-                             expected_job_output.keys())
-            simple_props = ['id', 'title', 'category', 'objective',
-                            'language_code', 'skill_tags', 'status',
-                            'community_owned', 'owner_ids',
-                            'editor_ids', 'viewer_ids', 'version',
-                            'exploration_model_created_on',
-                            'exploration_model_last_updated']
-            for exp_id in actual_job_output:
-                for prop in simple_props:
-                    self.assertEqual(
-                        getattr(actual_job_output[exp_id], prop),
-                        getattr(expected_job_output[exp_id], prop))
+            # TODO(sll): This duplicates _assert_summaries_are_equal() in
+            # exp_services_test.ActivitySummaryQueryTests. Remove the
+            # duplication.
+            self.assertEqual(len(actual_summaries), len(expected_summaries))
+
+            SIMPLE_PROPS = [
+                'activity_type', 'id', 'title', 'category',
+                'objective', 'language_code', 'skill_tags', 'status',
+                'community_owned', 'owner_ids', 'editor_ids', 'viewer_ids',
+                'version', 'activity_model_created_on',
+                'activity_model_last_updated']
+
+            for ind in range(len(actual_summaries)):
+                for prop in SIMPLE_PROPS:
+                    self.assertEqual(getattr(actual_summaries[ind], prop),
+                                     getattr(expected_summaries[ind], prop))
 
 
 class OneOffReindexExplorationsJobTest(test_utils.GenericTestBase):

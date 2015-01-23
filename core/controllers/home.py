@@ -95,8 +95,8 @@ class DashboardHandler(base.BaseHandler):
         subscription_services.record_user_has_seen_notifications(
             self.user_id, job_queued_msec if job_queued_msec else 0.0)
 
-        editable_exp_summaries = (
-            exp_services.get_at_least_editable_exploration_summaries(
+        editable_summaries = (
+            exp_services.get_at_least_editable_activity_summaries(
                 self.user_id))
 
         self.values.update({
@@ -107,11 +107,11 @@ class DashboardHandler(base.BaseHandler):
                     'objective': exp_summary.objective,
                     'language_code': exp_summary.language_code,
                     'last_updated': utils.get_time_in_millisecs(
-                        exp_summary.exploration_model_last_updated),
+                        exp_summary.activity_model_last_updated),
                     'status': exp_summary.status,
                     'community_owned': exp_summary.community_owned,
                     'is_editable': True,
-                } for exp_summary in editable_exp_summaries.values()
+                } for exp_summary in editable_summaries
             },
             # This may be None if no job has ever run for this user.
             'job_queued_msec': job_queued_msec,

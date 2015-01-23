@@ -18,6 +18,7 @@
 
 __author__ = 'Frederik Creemers'
 
+import logging
 import re
 
 from core import jobs
@@ -28,30 +29,32 @@ transaction_services = models.Registry.import_transaction_services()
 import utils
 
 
-class ExpSummariesCreationOneOffJob(jobs.BaseMapReduceJobManager):
-    """Job that calculates summaries of explorations, which can be
-    used to get e.g. the gallery. For every ExplorationModel entity,
-    create a ExpSummaryModel entity containing information described
-    in ExpSummariesAggregator.
-
-    The summaries store the following information:
-        title, category, objective, language_code, skill_tags,
-        last_updated, created_on, status (private, public or
-        publicized), community_owned, owner_ids, editor_ids,
-        viewer_ids, version.
+class ActivitySummariesCreationOneOffJob(jobs.BaseMapReduceJobManager):
+    """Job that calculates summaries of activities, which can be
+    used to get e.g. the gallery. For every ExplorationModel entity
+    and every AdventureModel entity, it creates an ActivitySummaryModel
+    entity.
     """
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel]
+        return [exp_models.ExplorationModel, exp_models.AdventureModel]
 
     @staticmethod
-    def map(exploration_model):
+    def map(model):
         from core.domain import exp_services
-        if not exploration_model.deleted:
-            exp_services.create_exploration_summary(exploration_model.id)
+        if not model.deleted:
+            if isinstance(model, exp_models.ExplorationModel):
+                exp_services.create_exploration_summary(model.id)
+            elif isinstance(model, exp_models.AdventureModel):
+                # TODO(sll): Create the corresponding adventure summary here.
+                pass
+            else:
+                logging.error(
+                    'Unexpected model type %s for '
+                    'ActivitySummariesCreationOneOffJob' % type(model))
 
     @staticmethod
-    def reduce(exp_id, list_of_exps):
+    def reduce(exp_id, unused_list_of_models):
         pass
 
 
