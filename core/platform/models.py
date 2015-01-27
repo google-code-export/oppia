@@ -23,8 +23,8 @@ import utils
 
 # Valid model names.
 NAMES = utils.create_enum(
-    'base_model', 'config', 'exploration', 'file', 'job', 'statistics', 'user',
-    'feedback')
+    'base_model', 'activity', 'config', 'feedback', 'file', 'job',
+    'statistics', 'user')
 
 
 class _Platform(object):
@@ -42,12 +42,12 @@ class _Gae(_Platform):
             if name == NAMES.base_model:
                 from core.storage.base_model import gae_models as base_model
                 returned_models.append(base_model)
+            elif name == NAMES.activity:
+                from core.storage.activity import gae_models as activity_model
+                returned_models.append(activity_model)
             elif name == NAMES.config:
                 from core.storage.config import gae_models as config_model
                 returned_models.append(config_model)
-            elif name == NAMES.exploration:
-                from core.storage.exploration import gae_models as exp_model
-                returned_models.append(exp_model)
             elif name == NAMES.file:
                 from core.storage.file import gae_models as file_model
                 returned_models.append(file_model)
@@ -55,8 +55,8 @@ class _Gae(_Platform):
                 from core.storage.job import gae_models as job_model
                 returned_models.append(job_model)
             elif name == NAMES.statistics:
-                from core.storage.statistics import gae_models as statistics_model
-                returned_models.append(statistics_model)
+                from core.storage.statistics import gae_models as stats_model
+                returned_models.append(stats_model)
             elif name == NAMES.user:
                 from core.storage.user import gae_models as user_model
                 returned_models.append(user_model)

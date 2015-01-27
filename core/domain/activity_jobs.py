@@ -23,8 +23,8 @@ import re
 
 from core import jobs
 from core.platform import models
-(base_models, exp_models,) = models.Registry.import_models([
-    models.NAMES.base_model, models.NAMES.exploration])
+(activity_models, base_models,) = models.Registry.import_models([
+    models.NAMES.activity, models.NAMES.base_model])
 transaction_services = models.Registry.import_transaction_services()
 import utils
 
@@ -37,15 +37,16 @@ class ActivitySummariesCreationOneOffJob(jobs.BaseMapReduceJobManager):
     """
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel, exp_models.AdventureModel]
+        return [
+            activity_models.ExplorationModel, activity_models.AdventureModel]
 
     @staticmethod
     def map(model):
         from core.domain import exp_services
         if not model.deleted:
-            if isinstance(model, exp_models.ExplorationModel):
+            if isinstance(model, activity_models.ExplorationModel):
                 exp_services.create_exploration_summary(model.id)
-            elif isinstance(model, exp_models.AdventureModel):
+            elif isinstance(model, activity_models.AdventureModel):
                 # TODO(sll): Create the corresponding adventure summary here.
                 pass
             else:
@@ -63,14 +64,14 @@ class IndexAllExplorationsJobManager(jobs.BaseMapReduceJobManager):
 
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel]
+        return [activity_models.ExplorationModel]
 
     @staticmethod
     def map(item):
         # We're inline importing here to break import loops like this: (->
         # means imports):
         #   exp_services -> event_services -> jobs_registry ->
-        #   exp_jobs -> exp_services.
+        #   activity_jobs -> exp_services.
         from core.domain import exp_services
         exp_services.index_explorations_given_ids([item.id])
 
@@ -80,7 +81,7 @@ class ExplorationValidityJobManager(jobs.BaseMapReduceJobManager):
 
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel]
+        return [activity_models.ExplorationModel]
 
     @staticmethod
     def map(item):
@@ -100,7 +101,7 @@ class ParameterDiscoveryJobManager(jobs.BaseMapReduceJobManager):
 
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel]
+        return [activity_models.ExplorationModel]
 
     @staticmethod
     def map(item):

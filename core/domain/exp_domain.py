@@ -1443,6 +1443,9 @@ class ActivitySummary(object):
 
     Note that ActivitySummary objects are uniquely identified by the 2-tuple
     (activity_type, activity_id). The activity_id alone is not sufficient.
+
+    Allowed values for activity_type are feconf.ACTIVITY_TYPE_ADVENTURE and
+    feconf.ACTIVITY_TYPE_EXPLORATION.
     """
     def __init__(self, activity_type, activity_id, title, category,
                  objective, language_code, skill_tags, status,

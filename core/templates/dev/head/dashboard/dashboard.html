@@ -69,40 +69,40 @@
                   </a>
                 </div>
 
-                <div ng-if="!isEmpty(privateExplorationIds)">
+                <div ng-if="!isEmpty(privateActivityIds)">
                   <hr>
-                  <h4>Private explorations</h4>
+                  <h4>Private</h4>
                     <ul>
-                      <li ng-repeat="expId in privateExplorationIds">
-                        <a ng-href="/create/<[expId]>"><[explorations[expId].title]></a>
+                      <li ng-repeat="activityId in privateActivityIds">
+                        <a ng-href="/create/<[activityId]>"><[summaries[activityId].title]></a>
                       </li>
                     </ul>
                   </h4>
                 </div>
 
-                <div ng-if="!isEmpty(publicExplorationIds)">
+                <div ng-if="!isEmpty(publicActivityIds)">
                   <hr>
-                  <h4>Public explorations</h4>
+                  <h4>Public</h4>
                   <ul>
-                    <li ng-repeat="expId in publicExplorationIds">
-                      <a ng-href="/create/<[expId]>"><[explorations[expId].title]></a>
+                    <li ng-repeat="activityId in publicActivityIds">
+                      <a ng-href="/create/<[activityId]>"><[summaries[activityId].title]></a>
                     </li>
                   </ul>
                 </div>
 
-                <div ng-if="!isEmpty(featuredExplorationIds)">
+                <div ng-if="!isEmpty(featuredActivityIds)">
                   <hr>
-                  <h4>Featured explorations</h4>
+                  <h4>Featured</h4>
                   <ul>
-                    <li ng-repeat="expId in featuredExplorationIds">
-                      <a ng-href="/create/<[expId]>"><[explorations[expId].title]></a>
+                    <li ng-repeat="expId in featuredActivityIds">
+                      <a ng-href="/create/<[activityId]>"><[summaries[expId].title]></a>
                     </li>
                   </ul>
                 </div>
 
-                <div ng-if="isEmpty(privateExplorationIds) && isEmpty(publicExplorationIds) && isEmpty(featuredExplorationIds)">
+                <div ng-if="isEmpty(privateActivityIds) && isEmpty(publicActivityIds) && isEmpty(featuredActivityIds)">
                   <p>
-                    <em>You currently aren't managing or collaborating on any explorations.</em>
+                    <em>You currently aren't managing or collaborating on any explorations or adventures.</em>
                   </p>
                 </div>
               </div>

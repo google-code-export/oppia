@@ -21,8 +21,9 @@ from core import jobs
 from core.domain import feedback_services
 from core.domain import subscription_services
 from core.platform import models
-(exp_models, feedback_models, user_models) = models.Registry.import_models([
-    models.NAMES.exploration, models.NAMES.feedback, models.NAMES.user])
+(activity_models, feedback_models, user_models,) = (
+    models.Registry.import_models([
+        models.NAMES.activity, models.NAMES.feedback, models.NAMES.user]))
 import feconf
 import utils
 
@@ -100,7 +101,7 @@ class RecentUpdatesMRJobManager(
         activity_ids_list = item.activity_ids
         feedback_thread_ids_list = item.feedback_thread_ids
 
-        activities = exp_models.ExplorationModel.get_multi(
+        activities = activity_models.ExplorationModel.get_multi(
             activity_ids_list, include_deleted=True)
 
         for ind, activity in enumerate(activities):
@@ -109,7 +110,7 @@ class RecentUpdatesMRJobManager(
                     'Could not find activity %s' % activity_ids_list[ind])
                 continue
 
-            metadata_obj = exp_models.ExplorationModel.get_snapshots_metadata(
+            metadata_obj = activity_models.ExplorationModel.get_snapshots_metadata(
                 activity.id, [activity.version], allow_deleted=True)[0]
             yield (reducer_key, {
                 'type': feconf.UPDATE_TYPE_EXPLORATION_COMMIT,
@@ -140,7 +141,7 @@ class RecentUpdatesMRJobManager(
             yield (reducer_key, {
                 'type': feconf.UPDATE_TYPE_FEEDBACK_MESSAGE,
                 'activity_id': last_message.exploration_id,
-                'activity_title': exp_models.ExplorationModel.get_by_id(
+                'activity_title': activity_models.ExplorationModel.get_by_id(
                     last_message.exploration_id).title,
                 'author_id': last_message.author_id,
                 'last_updated_ms': utils.get_time_in_millisecs(
@@ -175,7 +176,7 @@ class DashboardSubscriptionsOneOffJob(jobs.BaseMapReduceJobManager):
     @classmethod
     def entity_classes_to_map_over(cls):
         return [
-            exp_models.ExplorationRightsModel,
+            activity_models.ExplorationRightsModel,
             feedback_models.FeedbackMessageModel,
         ]
 
@@ -187,7 +188,7 @@ class DashboardSubscriptionsOneOffJob(jobs.BaseMapReduceJobManager):
                     'type': 'feedback',
                     'id': item.thread_id
                 })
-        elif isinstance(item, exp_models.ExplorationRightsModel):
+        elif isinstance(item, activity_models.ExplorationRightsModel):
             if item.deleted:
                 return
 
@@ -206,7 +207,7 @@ class DashboardSubscriptionsOneOffJob(jobs.BaseMapReduceJobManager):
                 # Go through the history.
                 current_version = item.version
                 for version in range(1, current_version + 1):
-                    model = exp_models.ExplorationRightsModel.get_version(
+                    model = activity_models.ExplorationRightsModel.get_version(
                         item.id, version)
 
                     if not model.community_owned:

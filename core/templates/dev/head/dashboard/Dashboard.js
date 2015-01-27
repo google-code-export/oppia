@@ -75,19 +75,21 @@ oppia.controller('Dashboard', [
     $scope.lastSeenMsec = data.last_seen_msec || 0.0;
     $scope.currentUsername = data.username;
 
-    $scope.privateExplorationIds = [];
-    $scope.publicExplorationIds = [];
-    $scope.featuredExplorationIds = [];
-    $scope.explorations = data.explorations;
+    $scope.privateActivityIds = [];
+    $scope.publicActivityIds = [];
+    $scope.featuredActivityIds = [];
+    $scope.summaries = data.summaries;
 
-    for (var expId in $scope.explorations) {
-      var status = $scope.explorations[expId].status;
+    for (var activityId in $scope.summaries) {
+      var status = $scope.summaries[activityId].status;
+      var activityType = $scope.summaries[activityId].activity_type;
+
       if (status == GLOBALS.ACTIVITY_STATUS_PRIVATE) {
-        $scope.privateExplorationIds.push(expId);
+        $scope.privateActivityIds.push(activityId);
       } else if (status == GLOBALS.ACTIVITY_STATUS_PUBLIC) {
-        $scope.publicExplorationIds.push(expId);
+        $scope.publicActivityIds.push(activityId);
       } else if (status == GLOBALS.ACTIVITY_STATUS_PUBLICIZED) {
-        $scope.featuredExplorationIds.push(expId);
+        $scope.featuredActivityIds.push(activityId);
       } else {
         throw ('Error: Invalid exploration status ' + status);
       }

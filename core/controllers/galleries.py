@@ -19,15 +19,13 @@ __author__ = 'sll@google.com (Sean Lip)'
 import logging
 
 from core.controllers import base
+from core.domain import activity_jobs
 from core.domain import config_domain
 from core.domain import exp_domain
-from core.domain import exp_jobs
 from core.domain import exp_services
 from core.domain import rights_manager
 from core.domain import user_services
 from core.platform import models
-(base_models, exp_models,) = models.Registry.import_models([
-    models.NAMES.base_model, models.NAMES.exploration])
 current_user_services = models.Registry.import_current_user_services()
 import feconf
 import utils

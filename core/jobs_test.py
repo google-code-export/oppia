@@ -26,8 +26,8 @@ from core.domain import event_services
 from core.domain import exp_domain
 from core.domain import exp_services
 from core.platform import models
-(base_models, exp_models, stats_models) = models.Registry.import_models([
-    models.NAMES.base_model, models.NAMES.exploration, models.NAMES.statistics])
+(activity_models, base_models, stats_models) = models.Registry.import_models([
+    models.NAMES.activity, models.NAMES.base_model, models.NAMES.statistics])
 taskqueue_services = models.Registry.import_taskqueue_services()
 transaction_services = models.Registry.import_transaction_services()
 from core.tests import test_utils
@@ -463,7 +463,7 @@ class SampleMapReduceJobManager(jobs.BaseMapReduceJobManager):
 
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel]
+        return [activity_models.ExplorationModel]
 
     @staticmethod
     def map(item):
@@ -563,7 +563,9 @@ class TwoClassesMapReduceJobManager(jobs.BaseMapReduceJobManager):
 
     @classmethod
     def entity_classes_to_map_over(cls):
-        return [exp_models.ExplorationModel, exp_models.ExplorationRightsModel]
+        return [
+            activity_models.ExplorationModel,
+            activity_models.ExplorationRightsModel]
 
     @staticmethod
     def map(item):
@@ -588,8 +590,9 @@ class TwoClassesMapReduceJobIntegrationTests(test_utils.GenericTestBase):
         self.process_and_flush_pending_tasks()
 
     def test_count_entities(self):
-        self.assertEqual(exp_models.ExplorationModel.query().count(), 1)
-        self.assertEqual(exp_models.ExplorationRightsModel.query().count(), 1)
+        self.assertEqual(activity_models.ExplorationModel.query().count(), 1)
+        self.assertEqual(
+            activity_models.ExplorationRightsModel.query().count(), 1)
 
         job_id = TwoClassesMapReduceJobManager.create_new()
         TwoClassesMapReduceJobManager.enqueue(job_id)
@@ -732,8 +735,8 @@ class ContinuousComputationTests(test_utils.GenericTestBase):
 
             # Record an event. This will put the event in the task queue.
             event_services.StartExplorationEventHandler.record(
-                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id', {},
-                feconf.PLAY_TYPE_NORMAL)
+                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id',
+                {}, feconf.PLAY_TYPE_NORMAL)
             self.assertEqual(
                 StartExplorationEventCounter.get_count(self.EXP_ID), 0)
             self.assertEqual(self.count_jobs_in_taskqueue(), 1)
@@ -794,12 +797,12 @@ class ContinuousComputationTests(test_utils.GenericTestBase):
             # StartExplorationEventHandler.record() would just put the event
             # in the task queue, which we don't want to flush yet.
             event_services.StartExplorationEventHandler._handle_event(
-                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id', {},
-                feconf.PLAY_TYPE_NORMAL)
+                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id',
+                {}, feconf.PLAY_TYPE_NORMAL)
             StartExplorationEventCounter.on_incoming_event(
                 event_services.StartExplorationEventHandler.EVENT_TYPE,
-                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id', {},
-                feconf.PLAY_TYPE_NORMAL)
+                self.EXP_ID, 1, feconf.DEFAULT_INIT_STATE_NAME, 'session_id',
+                {}, feconf.PLAY_TYPE_NORMAL)
             # The overall count is now 1.
             self.assertEqual(
                 StartExplorationEventCounter.get_count(self.EXP_ID), 1)

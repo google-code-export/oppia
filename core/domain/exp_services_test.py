@@ -32,7 +32,7 @@ from core.domain import rule_domain
 from core.domain import user_services
 from core.platform import models
 (base_models, exp_models) = models.Registry.import_models([
-    models.NAMES.base_model, models.NAMES.exploration
+    models.NAMES.base_model, models.NAMES.activity
 ])
 search_services = models.Registry.import_search_services()
 taskqueue_services = models.Registry.import_taskqueue_services()

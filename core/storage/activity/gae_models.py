@@ -90,6 +90,15 @@ class _BaseActivityModel(base_models.VersionedModel):
     # A blurb for this activity.
     blurb = ndb.TextProperty(default='', indexed=False)
 
+    @classmethod
+    def get_new_id(cls, entity_name):
+        """Overwrites the superclass method. Ensures that no exploration id
+        conflicts with an adventure id.
+        """
+        return super(_BaseActivityModel, cls).get_new_id(
+            entity_name, [AdventureModel, ExplorationModel, _BaseActivityModel
+        ])
+
 
 class AdventureModel(_BaseActivityModel):
     """Versioned storage model for an Oppia adventure."""
@@ -428,7 +437,7 @@ class ActivitySummaryModel(base_models.BaseModel):
     """Summary model for an Oppia activity.
 
     These are used in contexts where the content blob of the activity is not
-    needed (e.g. gallery, search).
+    needed (e.g. the gallery).
 
     An ActivitySummaryModel instance stores the following information:
 

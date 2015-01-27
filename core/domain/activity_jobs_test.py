@@ -22,26 +22,24 @@ __author__ = 'Frederik Creemers'
 
 from core import jobs_registry
 from core.domain import exp_domain
-from core.domain import exp_jobs
+from core.domain import activity_jobs
 from core.domain import rights_manager
 from core.platform import models
 from core.tests import test_utils
-(job_models, exp_models,) = models.Registry.import_models([
-   models.NAMES.job, models.NAMES.exploration])
+(activity_models, job_models,) = models.Registry.import_models([
+   models.NAMES.activity, models.NAMES.job])
 search_services = models.Registry.import_search_services()
 import feconf
 
 
 class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
-    """Tests for ExpSummary aggregations."""
+    """Tests for aggregations of ActivitySummaries."""
 
     ONE_OFF_JOB_MANAGERS_FOR_TESTS = [
-        exp_jobs.ActivitySummariesCreationOneOffJob]
+        activity_jobs.ActivitySummariesCreationOneOffJob]
 
     def test_all_exps_publicized(self):
-        """Test exploration summary batch job if all explorations are
-        publicized.
-        """
+        """Test summary batch job with a set of publicized explorations."""
 
         # specify explorations that will be used in test
         exp_specs = [
@@ -62,8 +60,9 @@ class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
             default_status=feconf.ACTIVITY_STATUS_PUBLICIZED)
 
     def test_all_exps_public(self):
-        """Test summary batch job if all explorations are public
-        but not publicized."""
+        """Test summary batch job with a set of public (but not publicized)
+        explorations.
+        """
 
         exp_specs = [
             {'category': 'Category A',
@@ -166,7 +165,7 @@ class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                 # do not include user_id here, so all explorations are not
                 # editable for now (will be updated depending on user_id
                 # in galleries)
-                exp_rights_model = exp_models.ExplorationRightsModel.get(
+                exp_rights_model = activity_models.ExplorationRightsModel.get(
                     exp_id)
 
                 exploration = exp_services.get_exploration_by_id(exp_id)
@@ -209,8 +208,9 @@ class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
                 expected_summaries.append(summary)
 
             # run batch job
-            job_id = exp_jobs.ActivitySummariesCreationOneOffJob.create_new()
-            exp_jobs.ActivitySummariesCreationOneOffJob.enqueue(job_id)
+            job_id = (
+                activity_jobs.ActivitySummariesCreationOneOffJob.create_new())
+            activity_jobs.ActivitySummariesCreationOneOffJob.enqueue(job_id)
             self.process_and_flush_pending_tasks()
 
             # get job output
@@ -254,8 +254,8 @@ class OneOffReindexExplorationsJobTest(test_utils.GenericTestBase):
         self.process_and_flush_pending_tasks()
 
     def test_standard_operation(self):
-        job_id = (exp_jobs.IndexAllExplorationsJobManager.create_new())
-        exp_jobs.IndexAllExplorationsJobManager.enqueue(job_id)
+        job_id = (activity_jobs.IndexAllExplorationsJobManager.create_new())
+        activity_jobs.IndexAllExplorationsJobManager.enqueue(job_id)
 
         self.assertEqual(self.count_jobs_in_taskqueue(), 1)
 
@@ -280,4 +280,3 @@ class OneOffReindexExplorationsJobTest(test_utils.GenericTestBase):
             self.assertIn("%s%s" % (self.EXP_ID, i), ids)
             self.assertIn('title %d' % i, titles)
             self.assertIn('category%d' % i, categories)
-

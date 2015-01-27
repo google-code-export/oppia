@@ -28,7 +28,7 @@ from core.domain import subscription_services
 from core.domain import user_services
 from core.platform import models
 current_user_services = models.Registry.import_current_user_services()
-(exp_models,) = models.Registry.import_models([models.NAMES.exploration])
+(activity_models,) = models.Registry.import_models([models.NAMES.activity])
 import feconf
 import utils
 
@@ -151,7 +151,7 @@ def _save_exploration_rights(
     """Saves an ExplorationRights domain object to the datastore."""
     exploration_rights.validate()
 
-    model = exp_models.ExplorationRightsModel.get(
+    model = activity_models.ExplorationRightsModel.get(
         exploration_rights.id, strict=False)
 
     model.owner_ids = exploration_rights.owner_ids
@@ -176,7 +176,7 @@ def create_new_exploration_rights(exploration_id, committer_id):
         exploration_id, [committer_id], [], [])
     commit_cmds = [{'cmd': CMD_CREATE_NEW}]
 
-    exp_models.ExplorationRightsModel(
+    activity_models.ExplorationRightsModel(
         id=exploration_rights.id,
         owner_ids=exploration_rights.owner_ids,
         editor_ids=exploration_rights.editor_ids,
@@ -192,7 +192,7 @@ def create_new_exploration_rights(exploration_id, committer_id):
 
 def get_exploration_rights(exploration_id):
     """Retrieves the rights for this exploration from the datastore."""
-    model = exp_models.ExplorationRightsModel.get(exploration_id)
+    model = activity_models.ExplorationRightsModel.get(exploration_id)
     if model is None:
         raise Exception('This exploration does not exist.')
     return _get_exploration_rights_from_model(model)

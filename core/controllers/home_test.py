@@ -85,7 +85,7 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
     def test_no_explorations(self):
         self.login(self.OWNER_EMAIL)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(response['explorations'], {})
+        self.assertEqual(response['summaries'], {})
         self.logout()
 
     def test_managers_can_see_explorations_on_dashboard(self):
@@ -95,26 +95,26 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
 
         self.login(self.OWNER_EMAIL)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PRIVATE)
 
         rights_manager.publish_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PUBLIC)
 
         rights_manager.publicize_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PUBLICIZED)
         self.logout()
 
@@ -128,26 +128,26 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
 
         self.login(self.COLLABORATOR_EMAIL)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PRIVATE)
 
         rights_manager.publish_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PUBLIC)
 
         rights_manager.publicize_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(len(response['explorations']), 1)
-        self.assertIn(self.EXP_ID, response['explorations'])
+        self.assertEqual(len(response['summaries']), 1)
+        self.assertIn(self.EXP_ID, response['summaries'])
         self.assertEqual(
-            response['explorations'][self.EXP_ID]['status'],
+            response['summaries'][self.EXP_ID]['status'],
             feconf.ACTIVITY_STATUS_PUBLICIZED)
 
         self.logout()
@@ -162,15 +162,15 @@ class DashboardHandlerTest(test_utils.GenericTestBase):
 
         self.login(self.VIEWER_EMAIL)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(response['explorations'], {})
+        self.assertEqual(response['summaries'], {})
 
         rights_manager.publish_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(response['explorations'], {})
+        self.assertEqual(response['summaries'], {})
 
         rights_manager.publicize_exploration(self.owner_id, self.EXP_ID)
         response = self.get_json('/dashboardhandler/data')
-        self.assertEqual(response['explorations'], {})
+        self.assertEqual(response['summaries'], {})
         self.logout()
 
     def _get_recent_updates_mock_by_viewer(self, unused_user_id):

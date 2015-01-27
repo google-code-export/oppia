@@ -100,18 +100,12 @@ class DashboardHandler(base.BaseHandler):
                 self.user_id))
 
         self.values.update({
-            'explorations': {
-                exp_summary.id: {
-                    'title': exp_summary.title,
-                    'category': exp_summary.category,
-                    'objective': exp_summary.objective,
-                    'language_code': exp_summary.language_code,
-                    'last_updated': utils.get_time_in_millisecs(
-                        exp_summary.activity_model_last_updated),
-                    'status': exp_summary.status,
-                    'community_owned': exp_summary.community_owned,
-                    'is_editable': True,
-                } for exp_summary in editable_summaries
+            'summaries': {
+                summary.id: {
+                    'activity_type': summary.activity_type,
+                    'title': summary.title,
+                    'status': summary.status,
+                } for summary in editable_summaries
             },
             # This may be None if no job has ever run for this user.
             'job_queued_msec': job_queued_msec,

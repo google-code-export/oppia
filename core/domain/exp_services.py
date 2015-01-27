@@ -40,7 +40,7 @@ import feconf
 memcache_services = models.Registry.import_memcache_services()
 search_services = models.Registry.import_search_services()
 taskqueue_services = models.Registry.import_taskqueue_services()
-(exp_models,) = models.Registry.import_models([models.NAMES.exploration])
+(activity_models,) = models.Registry.import_models([models.NAMES.activity])
 import utils
 
 # This takes additional 'title' and 'category' parameters.
@@ -94,7 +94,7 @@ def get_exploration_by_id(exploration_id, strict=True, version=None):
     if memcached_exploration is not None:
         return memcached_exploration
     else:
-        exploration_model = exp_models.ExplorationModel.get(
+        exploration_model = activity_models.ExplorationModel.get(
             exploration_id, strict=strict, version=version)
         if exploration_model:
             exploration = get_exploration_from_model(exploration_model)
@@ -110,7 +110,7 @@ def get_exploration_summary_by_id(exploration_id):
     exploration with the given exploration_id.
     """
     # TODO(msl): Maybe use memcache similarly to get_exploration_by_id.
-    exp_summary_model = exp_models.ActivitySummaryModel.get(
+    exp_summary_model = activity_models.ActivitySummaryModel.get(
         feconf.ACTIVITY_TYPE_EXPLORATION, exploration_id)
     if exp_summary_model:
         exp_summary = get_activity_summary_from_model(exp_summary_model)
@@ -138,11 +138,11 @@ def get_multiple_explorations_by_id(exp_ids, strict=True):
         if _id not in result:
             uncached.append(_id)
 
-    db_exp_models = exp_models.ExplorationModel.get_multi(uncached)
+    db_activity_models = activity_models.ExplorationModel.get_multi(uncached)
     db_results_dict = {}
     not_found = []
     for i, eid in enumerate(uncached):
-        model = db_exp_models[i]
+        model = db_activity_models[i]
         if model:
             exploration = get_exploration_from_model(model)
             db_results_dict[eid] = exploration
@@ -170,7 +170,7 @@ def get_multiple_explorations_by_id(exp_ids, strict=True):
 
 def get_new_exploration_id():
     """Returns a new exploration id."""
-    return exp_models.ExplorationModel.get_new_id('')
+    return activity_models.ExplorationModel.get_new_id('')
 
 
 # Query methods.
@@ -185,7 +185,7 @@ def get_exploration_titles_and_categories(exp_ids):
     """
     explorations = [
         (get_exploration_from_model(e) if e else None)
-        for e in exp_models.ExplorationModel.get_multi(exp_ids)]
+        for e in activity_models.ExplorationModel.get_multi(exp_ids)]
 
     result = {}
     for ind, exploration in enumerate(explorations):
@@ -200,7 +200,7 @@ def get_exploration_titles_and_categories(exp_ids):
     return result
 
 
-def _get_activity_summary_dicts_from_models(activity_summary_models):
+def _get_activity_summaries_from_models(activity_summary_models):
     """Given an iterable of ActivitySummaryModel instances, create a list
     containing the corresponding ActivitySummary domain objects.
     """
@@ -215,35 +215,36 @@ def get_activity_summaries_matching_query(query_string):
     """
     activity_ids, unused_cursor = search_explorations(query_string)
     summary_models = [
-        model for model in exp_models.ActivitySummaryModel.get_multi(exp_ids)
+        model for model in activity_models.ActivitySummaryModel.get_multi(
+            activity_ids)
         if model is not None]
-    return _get_activity_summary_dicts_from_models(summary_models)
+    return _get_activity_summaries_from_models(summary_models)
 
 
 def get_non_private_activity_summaries():
     """Returns a list with all non-private activity summary domain objects."""
-    return _get_activity_summary_dicts_from_models(
-        exp_models.ActivitySummaryModel.get_non_private())
+    return _get_activity_summaries_from_models(
+        activity_models.ActivitySummaryModel.get_non_private())
 
 
 def get_all_activity_summaries():
     """Returns a list with all activity summary domain objects."""
-    return _get_activity_summary_dicts_from_models(
-        exp_models.ActivitySummaryModel.get_all())
+    return _get_activity_summaries_from_models(
+        activity_models.ActivitySummaryModel.get_all())
 
 
 def get_at_least_editable_activity_summaries(user_id):
     """Returns a list with all activity summary domain objects that are
     at least editable by the given user.
     """
-    return _get_activity_summary_dicts_from_models(
-        exp_models.ActivitySummaryModel.get_at_least_editable(
+    return _get_activity_summaries_from_models(
+        activity_models.ActivitySummaryModel.get_at_least_editable(
             user_id=user_id))
 
 
 def count_explorations():
     """Returns the total number of explorations."""
-    return exp_models.ExplorationModel.get_exploration_count()
+    return activity_models.ExplorationModel.get_exploration_count()
 
 
 # Methods for exporting states and explorations to other formats.
@@ -513,10 +514,10 @@ def _save_exploration(
     else:
         exploration.validate()
 
-    exploration_model = exp_models.ExplorationModel.get(
+    exploration_model = activity_models.ExplorationModel.get(
         exploration.id, strict=False)
     if exploration_model is None:
-        exploration_model = exp_models.ExplorationModel(id=exploration.id)
+        exploration_model = activity_models.ExplorationModel(id=exploration.id)
     else:
         if exploration.version > exploration_model.version:
             raise Exception(
@@ -565,7 +566,7 @@ def _create_exploration(
     # but the creation of an exploration object will fail.
     exploration.validate()
     rights_manager.create_new_exploration_rights(exploration.id, committer_id)
-    model = exp_models.ExplorationModel(
+    model = activity_models.ExplorationModel(
         id=exploration.id,
         category=exploration.category,
         title=exploration.title,
@@ -614,12 +615,12 @@ def delete_exploration(committer_id, exploration_id, force_deletion=False):
     """
     # TODO(sll): Delete the files too?
 
-    exploration_rights_model = exp_models.ExplorationRightsModel.get(
+    exploration_rights_model = activity_models.ExplorationRightsModel.get(
         exploration_id)
     exploration_rights_model.delete(
         committer_id, '', force_deletion=force_deletion)
 
-    exploration_model = exp_models.ExplorationModel.get(exploration_id)
+    exploration_model = activity_models.ExplorationModel.get(exploration_id)
     exploration_model.delete(
         committer_id, feconf.COMMIT_MESSAGE_EXPLORATION_DELETED,
         force_deletion=force_deletion)
@@ -696,7 +697,7 @@ def get_exploration_snapshots_metadata(exploration_id):
     current_version = exploration.version
     version_nums = range(1, current_version + 1)
 
-    return exp_models.ExplorationModel.get_snapshots_metadata(
+    return activity_models.ExplorationModel.get_snapshots_metadata(
         exploration_id, version_nums)
 
 
@@ -746,7 +747,7 @@ def get_summary_of_exploration(exploration):
     """Create ActivitySummary domain object for a given Exploration domain
     object and return it.
     """
-    exp_rights = exp_models.ExplorationRightsModel.get_by_id(exploration.id)
+    exp_rights = activity_models.ExplorationRightsModel.get_by_id(exploration.id)
 
     return exp_domain.ActivitySummary(
         feconf.ACTIVITY_TYPE_EXPLORATION,
@@ -770,8 +771,8 @@ def _save_activity_summary(activity_summary):
     """Save activity summary domain object as an ActivitySummaryModel
     entity in datastore.
     """
-    exp_models.ActivitySummaryModel(
-        id=exp_models.ActivitySummaryModel.get_instance_id(
+    activity_models.ActivitySummaryModel(
+        id=activity_models.ActivitySummaryModel.get_instance_id(
             feconf.ACTIVITY_TYPE_EXPLORATION,
             activity_summary.id),
         activity_type=activity_summary.activity_type,
@@ -796,7 +797,7 @@ def _save_activity_summary(activity_summary):
 def delete_exploration_summary(exploration_id, force_deletion=False):
     """Delete an exploration summary model."""
 
-    exp_models.ActivitySummaryModel.get(
+    activity_models.ActivitySummaryModel.get(
         feconf.ACTIVITY_TYPE_EXPLORATION, exploration_id
     ).delete()
 
@@ -804,7 +805,7 @@ def delete_exploration_summary(exploration_id, force_deletion=False):
 def revert_exploration(
         committer_id, exploration_id, current_version, revert_to_version):
     """Reverts an exploration to the given version number. Commits changes."""
-    exploration_model = exp_models.ExplorationModel.get(
+    exploration_model = activity_models.ExplorationModel.get(
         exploration_id, strict=False)
 
     if current_version > exploration_model.version:
@@ -941,7 +942,7 @@ def get_next_page_of_all_commits(
         https://developers.google.com/appengine/docs/python/ndb/queryclass
     """
     results, new_urlsafe_start_cursor, more = (
-        exp_models.ExplorationCommitLogEntryModel.get_all_commits(
+        activity_models.ExplorationCommitLogEntryModel.get_all_commits(
             page_size, urlsafe_start_cursor))
 
     return ([exp_domain.ExplorationCommitLogEntry(
@@ -968,7 +969,7 @@ def get_next_page_of_all_non_private_commits(
             "max_age must be a datetime.timedelta instance. or None.")
 
     results, new_urlsafe_start_cursor, more = (
-        exp_models.ExplorationCommitLogEntryModel.get_all_non_private_commits(
+        activity_models.ExplorationCommitLogEntryModel.get_all_non_private_commits(
             page_size, urlsafe_start_cursor, max_age=max_age))
 
     return ([exp_domain.ExplorationCommitLogEntry(

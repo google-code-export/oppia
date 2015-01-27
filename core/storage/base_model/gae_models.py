@@ -118,7 +118,7 @@ class BaseModel(ndb.Model):
         return query
 
     @classmethod
-    def get_new_id(cls, entity_name):
+    def get_new_id(cls, entity_name, classes_to_avoid_collisions_with=None):
         """Gets a new id for an entity, based on its name.
 
         The returned id is guaranteed to be unique among all instances of this
@@ -127,6 +127,9 @@ class BaseModel(ndb.Model):
         Args:
           entity_name: the name of the entity. Coerced to a utf-8 encoded
             string. Defaults to ''.
+          classes_to_avoid_collisions_with: list of ndb.Model subclasses, or
+            None. If not None, the returned id should not match the id of any
+            entity in any of these classes.
 
         Returns:
           str: a new unique id for this entity class.
@@ -147,8 +150,16 @@ class BaseModel(ndb.Model):
             new_id = utils.convert_to_hash(
                 '%s%s' % (entity_name, utils.get_random_int(RAND_RANGE)),
                 ID_LENGTH)
-            if not cls.get_by_id(new_id):
-                return new_id
+
+            if cls.get_by_id(new_id):
+                continue
+
+            if (classes_to_avoid_collisions_with is not None and any([
+                    klass.get_by_id(new_id) for klass in
+                    classes_to_avoid_collisions_with])):
+                continue
+
+            return new_id
 
         raise Exception('New id generator is producing too many collisions.')
 

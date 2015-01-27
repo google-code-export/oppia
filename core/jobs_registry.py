@@ -18,7 +18,7 @@
 
 __author__ = 'Sean Lip'
 
-from core.domain import exp_jobs
+from core.domain import activity_jobs
 from core.domain import stats_jobs
 from core.domain import user_jobs
 
@@ -26,10 +26,10 @@ from core.domain import user_jobs
 # on the admin dashboard.
 ONE_OFF_JOB_MANAGERS = [
     user_jobs.DashboardSubscriptionsOneOffJob,
-    exp_jobs.IndexAllExplorationsJobManager,
-    exp_jobs.ActivitySummariesCreationOneOffJob,
-    exp_jobs.ExplorationValidityJobManager,
-    exp_jobs.ParameterDiscoveryJobManager]
+    activity_jobs.IndexAllExplorationsJobManager,
+    activity_jobs.ActivitySummariesCreationOneOffJob,
+    activity_jobs.ExplorationValidityJobManager,
+    activity_jobs.ParameterDiscoveryJobManager]
 
 # List of all ContinuousComputation managers to show controls for on the
 # admin dashboard.
