@@ -1,0 +1,14 @@
+<div ng-controller="ExplorationOverview">
+  <h2>Overview</h2>
+  <div ng-if="!hasTabLoaded" class="oppia-align-center">
+    Loading
+    <span class="oppia-loading-dot-one">.</span>
+    <span class="oppia-loading-dot-two">.</span>
+    <span class="oppia-loading-dot-three">.</span>
+  </div>
+  <div ng-if="hasTabLoaded">
+    <div state-graph-viz style="height: 1000px;" graph-data="graphData" allow-panning="true" on-click-function="selectState"
+         is-editable="isEditable">
+    </div>
+  </div>
+</div>

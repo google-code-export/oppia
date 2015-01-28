@@ -125,15 +125,15 @@ oppia.controller('ExplorationEditor', [
         editorContextService.setActiveStateName(explorationInitStateNameService.displayed);
       }
 
-      if (!routerService.isLocationSetToNonStateEditorTab() &&
-          !data.states.hasOwnProperty(routerService.getCurrentStateFromLocationPath())) {
-        routerService.navigateToMainTab();
+      if (!routerService.isLocationSetToNonOverviewTab()) {
+        routerService.navigateToOverviewTab();
       }
 
       explorationWarningsService.updateWarnings();
 
       $rootScope.loadingMessage = '';
 
+      $scope.$broadcast('refreshOverviewTab');
       $scope.$broadcast('refreshStatisticsTab');
       $scope.$broadcast('refreshVersionHistory', {forceRefresh: true});
 
@@ -294,6 +294,7 @@ oppia.controller('EditorNavigation', [
 
   $scope.explorationRightsService = explorationRightsService;
   $scope.getTabStatuses = routerService.getTabStatuses;
+  $scope.selectOverviewTab = routerService.navigateToOverviewTab;
   $scope.selectMainTab = routerService.navigateToMainTab;
   $scope.selectPreviewTab = routerService.navigateToPreviewTab;
   $scope.selectStatsTab = routerService.navigateToStatsTab;

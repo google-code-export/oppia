@@ -36,7 +36,7 @@
 {% endblock header_js %}
 
 {% block navbar_breadcrumb %}
-  <ul class="nav navbar-nav oppia-navbar-breadcrumb" ng-controller="EditorNavbarBreadcrumb">
+  <ul class="nav navbar-nav oppia-navbar-breadcrumb ng-cloak" ng-controller="EditorNavbarBreadcrumb">
     <li>
       <span class="oppia-navbar-breadcrumb-separator"></span>
       <span ng-if="navbarTitle">
@@ -50,10 +50,10 @@
 {% endblock navbar_breadcrumb %}
 
 {% block local_top_nav_options %}
-  <ul class="nav navbar-nav oppia-navbar-nav navbar-right" ng-controller="EditorNavigation" style="margin-left: 20px;">
-    <li ng-class="{'active': getTabStatuses().active === 'main', 'dropdown': countWarnings()}">
-      <a href="#" tooltip="Editor" tooltip-placement="<[countWarnings() ? 'left' : 'bottom']>" ng-click="selectMainTab()" class="protractor-test-main-tab">
-        <span class="glyphicon glyphicon-pencil"></span>
+  <ul class="nav navbar-nav oppia-navbar-nav navbar-right ng-cloak" ng-controller="EditorNavigation" style="margin-left: 20px;">
+    <li ng-class="{'active': getTabStatuses().active === 'overview', 'dropdown': countWarnings()}">
+      <a href="#" tooltip="Overview" tooltip-placement="<[countWarnings() ? 'left' : 'bottom']>" ng-click="selectOverviewTab()" class="protractor-test-overview-tab">
+        <span class="glyphicon glyphicon-th-list"></span>
       </a>
       <div ng-show="countWarnings()" class="oppia-exploration-warnings-indicator">
         <span class="oppia-exploration-warnings-count">
@@ -67,6 +67,12 @@
           <[warning]>
         </li>
       </ul>
+    </li>
+
+    <li ng-class="{'active': getTabStatuses().active === 'main'}">
+      <a href="#" tooltip="Editor" tooltip-placement="bottom" ng-click="selectMainTab()" class="protractor-test-main-tab">
+        <span class="glyphicon glyphicon-pencil"></span>
+      </a>
     </li>
 
     <li ng-class="{'active': getTabStatuses().active === 'preview'}" id="tutorialPreviewTab">
@@ -125,7 +131,7 @@
     </li>
   </ul>
 
-  <ul class="nav navbar-nav oppia-navbar-nav navbar-right" ng-controller="ExplorationPublishButton">
+  <ul class="nav navbar-nav oppia-navbar-nav navbar-right ng-cloak" ng-controller="ExplorationPublishButton">
     <li ng-if="isEditableOutsideTutorialMode()">
       <div dropdown class="btn-group" style="margin-right: 10px; margin-top: 8px;">
         <button id="tutorialSaveExplorationButton" class="btn btn-default protractor-test-save-changes" ng-class="{'btn-success': isExplorationSaveable()}" ng-click="saveChanges()" ng-disabled="!isExplorationSaveable()">
@@ -275,6 +281,10 @@
         </div>
       </div>
 
+      <div ng-show="getTabStatuses().active === 'overview'">
+        {% include 'editor/exploration_overview.html' %}
+      </div>
+
       <div ng-show="getTabStatuses().active === 'main'">
         <div class="row">
           <div class="col-lg-9 col-md-9 col-sm-9">
@@ -386,6 +396,7 @@
     {{ include_js_file('components/objectEditor.js') }}
     {{ object_editors_js }}
     {{ include_js_file('editor/RouterServices.js') }}
+    {{ include_js_file('editor/ExplorationOverview.js') }}
     {{ include_js_file('editor/ExplorationStatistics.js') }}
     {{ include_js_file('editor/ExplorationSettings.js') }}
     {{ include_js_file('editor/ExplorationHistory.js') }}

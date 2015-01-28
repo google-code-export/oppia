@@ -26,6 +26,7 @@ oppia.factory('routerService', [
              editorContextService, explorationStatesService, oppiaPlayerService,
              explorationParamSpecsService, explorationTitleService, explorationData) {
 
+  var OVERVIEW_TAB = 'overview';
   var MAIN_TAB = 'main';
   var PREVIEW_TAB = 'preview';
   var STATS_TAB = 'stats';
@@ -49,7 +50,10 @@ oppia.factory('routerService', [
 
     $rootScope.$broadcast('externalSave');
 
-    if (newPath === '/preview') {
+    if (newPath === '/overview') {
+      _tabs.active = OVERVIEW_TAB;
+      $rootScope.$broadcast('refreshOverviewTab');
+    } else if (newPath === '/preview') {
       _tabs.active = PREVIEW_TAB;
     } else if (newPath === '/stats') {
       _tabs.active = STATS_TAB;
@@ -75,9 +79,8 @@ oppia.factory('routerService', [
       }
       $rootScope.$broadcast('refreshStateEditor');
     } else {
-      if (explorationInitStateNameService.savedMemento) {
-        $location.path('/gui/' + explorationInitStateNameService.savedMemento);
-      }
+      $location.path('/overview/');
+      $rootScope.$broadcast('refreshOverviewTab');
     }
   });
 
@@ -100,9 +103,10 @@ oppia.factory('routerService', [
     getTabStatuses: function() {
       return _tabs;
     },
-    isLocationSetToNonStateEditorTab: function() {
+    isLocationSetToNonOverviewTab: function() {
       var currentPath = $location.path();
       return (
+        currentPath.indexOf('/gui/') !== -1 ||
         currentPath === '/preview' || currentPath === '/stats' ||
         currentPath === '/settings' || currentPath === '/history' ||
         currentPath === '/feedback');
@@ -113,6 +117,10 @@ oppia.factory('routerService', [
       } else {
         return null;
       }
+    },
+    navigateToOverviewTab: function() {
+      _savePendingChanges();
+      $location.path('/overview');
     },
     navigateToMainTab: function(stateName) {
       _savePendingChanges();
