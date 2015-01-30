@@ -96,8 +96,9 @@ class _BaseActivityModel(base_models.VersionedModel):
         conflicts with an adventure id.
         """
         return super(_BaseActivityModel, cls).get_new_id(
-            entity_name, [AdventureModel, ExplorationModel, _BaseActivityModel
-        ])
+            entity_name,
+            classes_to_avoid_collisions_with=[
+                AdventureModel, ExplorationModel, _BaseActivityModel])
 
 
 class AdventureModel(_BaseActivityModel):
