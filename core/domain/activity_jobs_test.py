@@ -14,11 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Jobs for explorations."""
+"""Test for one-off jobs relating to activities and their summaries."""
 
 __author__ = 'Frederik Creemers'
-
-"""Tests for ExpSummary continuous computations."""
 
 from core import jobs_registry
 from core.domain import exp_domain
