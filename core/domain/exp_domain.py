@@ -25,9 +25,8 @@ __author__ = 'Sean Lip'
 import copy
 import logging
 import re
-import string
 
-from core.domain import fs_domain
+from core.domain import activity_utils
 from core.domain import html_cleaner
 from core.domain import interaction_registry
 from core.domain import param_domain
@@ -793,37 +792,8 @@ class Exploration(object):
             {}, [], 0)
 
     @classmethod
-    def _require_valid_name(cls, name, name_type):
-        """Generic name validation.
-
-        Args:
-          name: the name to validate.
-          name_type: a human-readable string, like 'the exploration title' or
-            'a state name'. This will be shown in error messages.
-        """
-        # This check is needed because state names are used in URLs and as ids
-        # for statistics, so the name length should be bounded above.
-        if len(name) > 50 or len(name) < 1:
-            raise utils.ValidationError(
-                'The length of %s should be between 1 and 50 '
-                'characters; received %s' % (name_type, name))
-
-        if name[0] in string.whitespace or name[-1] in string.whitespace:
-            raise utils.ValidationError(
-                'Names should not start or end with whitespace.')
-
-        if re.search('\s\s+', name):
-            raise utils.ValidationError(
-                'Adjacent whitespace in %s should be collapsed.' % name_type)
-
-        for c in feconf.INVALID_NAME_CHARS:
-            if c in name:
-                raise utils.ValidationError(
-                    'Invalid character %s in %s: %s' % (c, name_type, name))
-
-    @classmethod
     def _require_valid_state_name(cls, name):
-        cls._require_valid_name(name, 'a state name')
+        activity_utils.require_valid_name(name, 'a state name')
 
         if name.lower() == feconf.END_DEST.lower():
             raise utils.ValidationError(
@@ -837,13 +807,14 @@ class Exploration(object):
         if not isinstance(self.title, basestring):
             raise utils.ValidationError(
                 'Expected title to be a string, received %s' % self.title)
-        self._require_valid_name(self.title, 'the exploration title')
+        activity_utils.require_valid_name(self.title, 'the exploration title')
 
         if not isinstance(self.category, basestring):
             raise utils.ValidationError(
                 'Expected category to be a string, received %s'
                 % self.category)
-        self._require_valid_name(self.category, 'the exploration category')
+        activity_utils.require_valid_name(
+            self.category, 'the exploration category')
 
         if not isinstance(self.objective, basestring):
             raise utils.ValidationError(
@@ -1438,6 +1409,7 @@ class Exploration(object):
             state.interaction.id for state in self.states.values()]))
 
 
+# TODO(sll): move this class to a different summaries_domain.py file.
 class ActivitySummary(object):
     """Domain object for an Oppia activity summary.
 

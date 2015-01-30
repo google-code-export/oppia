@@ -34,7 +34,7 @@ describe('Dashboard controller', function() {
 
       $httpBackend = _$httpBackend_;
       $httpBackend.expectGET('/dashboardhandler/data').respond({
-        explorations: {
+        summaries: {
           'private_exp_id': {
             category: 'Private category',
             status: 'private',
@@ -60,9 +60,9 @@ describe('Dashboard controller', function() {
 
     it('should classify explorations correctly', function() {
       $httpBackend.flush();
-      expect(scope.privateExplorationIds).toEqual(['private_exp_id']);
-      expect(scope.publicExplorationIds).toEqual([]);
-      expect(scope.featuredExplorationIds).toEqual(['featured_exp_id']);
+      expect(scope.privateActivityIds).toEqual(['private_exp_id']);
+      expect(scope.publicActivityIds).toEqual([]);
+      expect(scope.featuredActivityIds).toEqual(['featured_exp_id']);
     });
   });
 });

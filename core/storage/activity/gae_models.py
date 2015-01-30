@@ -105,10 +105,13 @@ class AdventureModel(_BaseActivityModel):
     SNAPSHOT_METADATA_CLASS = AdventureSnapshotMetadataModel
     SNAPSHOT_CONTENT_CLASS = AdventureSnapshotContentModel
 
-    # The id of the initial activity for this adventure.
-    entry_point_activity = ndb.StringProperty(required=True, indexed=True)
-    # A dict representing the specification of this adventure.
-    # TODO(sll): document this.
+    # The list of possible entry points for this adventure. Each entry point
+    # is a dict with two keys: 'activity type' and 'activity id'.
+    entry_points = ndb.JsonProperty(repeated=True, indexed=True)
+    # A dict representing the specification of this adventure. It has keys
+    # 'exploration_specs' and 'adventure_specs' whose values are dicts. The
+    # keys of these subdicts are activity ids, and their values are dicts
+    # representing ActivitySpecs (see adventure_domain.py for more details).
     specification = ndb.JsonProperty(default={}, indexed=False)
 
     def _trusted_commit(
