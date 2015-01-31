@@ -35,6 +35,7 @@ from core.domain import event_services
 from core.domain import exp_domain
 from core.domain import fs_domain
 from core.domain import rights_manager
+from core.domain import summary_services
 from core.platform import models
 import feconf
 memcache_services = models.Registry.import_memcache_services()
@@ -71,19 +72,6 @@ def get_exploration_from_model(exploration_model):
         exploration_model.created_on, exploration_model.last_updated)
 
 
-def get_activity_summary_from_model(model):
-    """Given an ActivitySummaryModel instance, return the corresponding
-    ActivitySummary domain object.
-    """
-    return exp_domain.ActivitySummary(
-        model.activity_type, model.activity_id, model.title, model.category,
-        model.objective, model.language_code, model.skill_tags,
-        model.status, model.community_owned, model.owner_ids,
-        model.editor_ids, model.viewer_ids, model.version,
-        model.activity_model_created_on,
-        model.activity_model_last_updated)
-
-
 def get_exploration_by_id(exploration_id, strict=True, version=None):
     """Returns a domain object representing an exploration."""
     exploration_memcache_key = _get_exploration_memcache_key(
@@ -103,21 +91,6 @@ def get_exploration_by_id(exploration_id, strict=True, version=None):
             return exploration
         else:
             return None
-
-
-def get_exploration_summary_by_id(exploration_id):
-    """Returns an ActivitySummary domain object corresponding to the
-    exploration with the given exploration_id.
-    """
-    # TODO(msl): Maybe use memcache similarly to get_exploration_by_id.
-    exp_summary_model = activity_models.ActivitySummaryModel.get(
-        feconf.ACTIVITY_TYPE_EXPLORATION, exploration_id)
-    if exp_summary_model:
-        exp_summary = get_activity_summary_from_model(exp_summary_model)
-        assert exp_summary.activity_type == feconf.ACTIVITY_TYPE_EXPLORATION
-        return exp_summary
-    else:
-        return None
 
 
 def get_multiple_explorations_by_id(exp_ids, strict=True):
@@ -198,48 +171,6 @@ def get_exploration_titles_and_categories(exp_ids):
                 'category': exploration.category,
             }
     return result
-
-
-def _get_activity_summaries_from_models(activity_summary_models):
-    """Given an iterable of ActivitySummaryModel instances, create a list
-    containing the corresponding ActivitySummary domain objects.
-    """
-    return [
-        get_activity_summary_from_model(summary_model)
-        for summary_model in activity_summary_models]
-
-
-def get_activity_summaries_matching_query(query_string):
-    """Returns a list with all activity summary domain objects matching the
-    given search query string.
-    """
-    activity_ids, unused_cursor = search_explorations(query_string)
-    summary_models = [
-        model for model in activity_models.ActivitySummaryModel.get_multi(
-            activity_ids)
-        if model is not None]
-    return _get_activity_summaries_from_models(summary_models)
-
-
-def get_non_private_activity_summaries():
-    """Returns a list with all non-private activity summary domain objects."""
-    return _get_activity_summaries_from_models(
-        activity_models.ActivitySummaryModel.get_non_private())
-
-
-def get_all_activity_summaries():
-    """Returns a list with all activity summary domain objects."""
-    return _get_activity_summaries_from_models(
-        activity_models.ActivitySummaryModel.get_all())
-
-
-def get_at_least_editable_activity_summaries(user_id):
-    """Returns a list with all activity summary domain objects that are
-    at least editable by the given user.
-    """
-    return _get_activity_summaries_from_models(
-        activity_models.ActivitySummaryModel.get_at_least_editable(
-            user_id=user_id))
 
 
 def count_explorations():
@@ -732,39 +663,15 @@ def update_exploration(
 def create_exploration_summary(exploration_id):
     """Create summary of an exploration and store in datastore."""
     exploration = get_exploration_by_id(exploration_id)
-    exp_summary = get_summary_of_exploration(exploration)
+    exp_summary = summary_services.get_summary_of_exploration(exploration)
     _save_activity_summary(exp_summary)
 
 
 def update_exploration_summary(exploration_id):
     """Update the summary of an exploration."""
     exploration = get_exploration_by_id(exploration_id)
-    exp_summary = get_summary_of_exploration(exploration)
+    exp_summary = summary_services.get_summary_of_exploration(exploration)
     _save_activity_summary(exp_summary)
-
-
-def get_summary_of_exploration(exploration):
-    """Create ActivitySummary domain object for a given Exploration domain
-    object and return it.
-    """
-    exp_rights = activity_models.ExplorationRightsModel.get_by_id(exploration.id)
-
-    return exp_domain.ActivitySummary(
-        feconf.ACTIVITY_TYPE_EXPLORATION,
-        exploration.id,
-        exploration.title,
-        exploration.category,
-        exploration.objective,
-        exploration.language_code,
-        exploration.skill_tags,
-        exp_rights.status,
-        exp_rights.community_owned,
-        exp_rights.owner_ids,
-        exp_rights.editor_ids,
-        exp_rights.viewer_ids,
-        exploration.version,
-        exploration.created_on,
-        exploration.last_updated)
 
 
 def _save_activity_summary(activity_summary):
@@ -773,8 +680,7 @@ def _save_activity_summary(activity_summary):
     """
     activity_models.ActivitySummaryModel(
         id=activity_models.ActivitySummaryModel.get_instance_id(
-            feconf.ACTIVITY_TYPE_EXPLORATION,
-            activity_summary.id),
+            activity_summary.activity_type, activity_summary.id),
         activity_type=activity_summary.activity_type,
         activity_id=activity_summary.id,
         title=activity_summary.title,

@@ -19,9 +19,10 @@
 __author__ = 'Frederik Creemers'
 
 from core import jobs_registry
-from core.domain import exp_domain
 from core.domain import activity_jobs
+from core.domain import exp_domain
 from core.domain import rights_manager
+from core.domain import summary_services
 from core.platform import models
 from core.tests import test_utils
 (activity_models, job_models,) = models.Registry.import_models([
@@ -212,7 +213,7 @@ class ActivitySummariesCreationOneOffJobTest(test_utils.GenericTestBase):
             self.process_and_flush_pending_tasks()
 
             # get job output
-            actual_summaries = exp_services.get_all_activity_summaries()
+            actual_summaries = summary_services.get_all_activity_summaries()
 
             # check job output
             # TODO(sll): This duplicates _assert_summaries_are_equal() in

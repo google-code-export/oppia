@@ -20,6 +20,7 @@ from core.controllers import base
 from core.domain import config_domain
 from core.domain import exp_services
 from core.domain import subscription_services
+from core.domain import summary_services
 from core.domain import user_jobs
 from core.domain import user_services
 import feconf
@@ -96,7 +97,7 @@ class DashboardHandler(base.BaseHandler):
             self.user_id, job_queued_msec if job_queued_msec else 0.0)
 
         editable_summaries = (
-            exp_services.get_at_least_editable_activity_summaries(
+            summary_services.get_at_least_editable_activity_summaries(
                 self.user_id))
 
         self.values.update({

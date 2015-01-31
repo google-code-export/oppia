@@ -24,6 +24,7 @@ from core.domain import config_domain
 from core.domain import exp_domain
 from core.domain import exp_services
 from core.domain import rights_manager
+from core.domain import summary_services
 from core.domain import user_services
 from core.platform import models
 current_user_services = models.Registry.import_current_user_services()
@@ -102,12 +103,12 @@ class GalleryHandler(base.BaseHandler):
         if query_string:
             # The user is performing a search.
             summaries_list = (
-                exp_services.get_activity_summaries_matching_query(
+                summary_services.get_activity_summaries_matching_query(
                     query_string))
         else:
             # Load the default version of the gallery.
             summaries_list = (
-                exp_services.get_non_private_activity_summaries())
+                summary_services.get_non_private_activity_summaries())
 
         # TODO(msl): Store 'is_editable' in exploration summary to avoid O(n)
         # individual lookups. Note that this will depend on user_id.
