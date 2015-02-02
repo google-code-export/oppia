@@ -112,7 +112,7 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
         self.assertEqual(adventure.category, 'Adventure Category')
         adventure.update_category('New Category')
         self.assertEqual(adventure.category, 'New Category')
-    
+
     def test_update_objective(self):
         """Test updating the objective of an adventure."""
         adventure = adventure_domain.Adventure.create_default(
@@ -200,7 +200,7 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
         self.assertEqual(
             adventure.entry_points[1].activity_type,
             feconf.ACTIVITY_TYPE_EXPLORATION)
-        self.assertEqual(adventure.entry_points[1].activity_id, 'id2')    
+        self.assertEqual(adventure.entry_points[1].activity_id, 'id2')
 
     def test_update_adventure_specification(self):
         """Test updating the specification of an adventure."""
@@ -220,7 +220,8 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
         with self.assertRaisesRegexp(
                 Exception,
                 'Could not find exploration id exp3 in adventure spec'):
-            adventure.delete_activity(feconf.ACTIVITY_TYPE_EXPLORATION, 'exp3')
+            adventure.delete_activity(
+                feconf.ACTIVITY_TYPE_EXPLORATION, 'exp3')
 
         # Delete an activity that isn't an entry point
         adventure.delete_activity(feconf.ACTIVITY_TYPE_ADVENTURE, 'adv1')
@@ -293,10 +294,12 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
 
         exploration_spec.update_destination_specs([
             adventure_domain.DestinationSpec(
-                feconf.ACTIVITY_TYPE_EXPLORATION, 'same_id_but_different_type',
+                feconf.ACTIVITY_TYPE_EXPLORATION,
+                'same_id_but_different_type',
                 adventure_domain.DEST_DISPLAY_OPTION_ALWAYS),
             adventure_domain.DestinationSpec(
-                feconf.ACTIVITY_TYPE_ADVENTURE, 'same_id_but_different_type',
+                feconf.ACTIVITY_TYPE_ADVENTURE,
+                'same_id_but_different_type',
                 adventure_domain.DEST_DISPLAY_OPTION_ALWAYS),
         ])
         exploration_spec.validate()
