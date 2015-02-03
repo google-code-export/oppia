@@ -31,7 +31,7 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
         """Test validation of adventures."""
         adventure = adventure_domain.Adventure.create_default(
             'adv_id', '|||||TITLE|||||', '{{CATEGORY}}',
-            ['objective', 'should', 'really', 'be', 'a', 'string'])
+            objective=['objective', 'should', 'really', 'be', 'a', 'string'])
 
         with self.assertRaisesRegexp(
                 utils.ValidationError, 'the adventure title'):
@@ -86,13 +86,21 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
                 'Could not find entry_point .* in the specification'):
             adventure.validate()
 
-        adventure.add_activity(feconf.ACTIVITY_TYPE_EXPLORATION, 'abc')
+        adventure.add_activity(feconf.ACTIVITY_TYPE_EXPLORATION, '123')
+
+        adventure.add_activity(feconf.ACTIVITY_TYPE_ADVENTURE, 'adv_id_2')
         with self.assertRaisesRegexp(
                 utils.ValidationError,
-                'Could not find entry_point .* in the specification'):
+                'Adventures within an adventure are not currently supported.'):
+            adventure.validate()
+        adventure.delete_activity(feconf.ACTIVITY_TYPE_ADVENTURE, 'adv_id_2')
+
+        with self.assertRaisesRegexp(
+                utils.ValidationError,
+                'Could not find exploration with id 123'):
             adventure.validate()
 
-        adventure.add_activity(feconf.ACTIVITY_TYPE_EXPLORATION, '123')
+        self.save_new_default_exploration('123', 'editor@example.com')
         adventure.validate()
 
     def test_update_title(self):
@@ -303,3 +311,34 @@ class AdventureDomainUnitTests(test_utils.GenericTestBase):
                 adventure_domain.DEST_DISPLAY_OPTION_ALWAYS),
         ])
         exploration_spec.validate()
+
+
+class AdventureConversionUnitTests(test_utils.GenericTestBase):
+    """Test conversion methods on the adventure object."""
+
+    def test_yaml_conversion(self):
+        """Test conversion of adventures to YAML files and back again."""
+        adventure = adventure_domain.Adventure.create_default(
+            'adv_id', 'My Title', 'My Category', 'My Objective')
+        adventure.add_activity(feconf.ACTIVITY_TYPE_EXPLORATION, 'exp1')
+        adventure.add_activity(feconf.ACTIVITY_TYPE_ADVENTURE, 'adv1')
+        adventure.add_entry_point(feconf.ACTIVITY_TYPE_ADVENTURE, 'adv1')
+
+        adventure_yaml = adventure.to_yaml()
+        reconstituted_adventure = adventure_domain.Adventure.from_yaml(
+            'new_id', adventure_yaml)
+
+        self.assertEqual(reconstituted_adventure.title, adventure.title)
+        self.assertEqual(reconstituted_adventure.category, adventure.category)
+        self.assertEqual(
+            reconstituted_adventure.objective, adventure.objective)
+        self.assertEqual(
+            reconstituted_adventure.language_code, adventure.language_code)
+        self.assertEqual(reconstituted_adventure.blurb, adventure.blurb)
+        for ind in range(len(adventure.entry_points)):
+            self.assertEqual(
+                reconstituted_adventure.entry_points[ind].to_dict(),
+                adventure.entry_points[ind].to_dict())
+        self.assertEqual(
+            reconstituted_adventure.specification.to_dict(),
+            adventure.specification.to_dict())

@@ -23,6 +23,8 @@ should therefore be independent of the specific storage models used."""
 __author__ = 'Sean Lip'
 
 from core.domain import activity_utils
+from core.platform import models
+(activity_models,) = models.Registry.import_models([models.NAMES.activity])
 import feconf
 import utils
 
@@ -41,7 +43,7 @@ class EntryPoint(object):
           feconf.ACTIVITY_TYPE_EXPLORATION or feconf.ACTIVITY_TYPE_ADVENTURE.
       - activity_id: str. The id of the activity.
     """
-    _CURRENT_DICT_SCHEMA_VERSION = 1
+    _CURRENT_ENTRY_POINT_SCHEMA_VERSION = 1
 
     def __init__(self, activity_type, activity_id):
         self.activity_type = activity_type
@@ -49,10 +51,6 @@ class EntryPoint(object):
 
     def validate(self):
         # Validate the activity type.
-        if not isinstance(self.activity_type, basestring):
-            raise utils.ValidationError(
-                'Expected activity type to be a string, received %s'
-                % self.activity_type)
         if self.activity_type not in [
                 feconf.ACTIVITY_TYPE_EXPLORATION,
                 feconf.ACTIVITY_TYPE_ADVENTURE]:
@@ -72,7 +70,7 @@ class EntryPoint(object):
     @classmethod
     def from_dict(cls, entry_point_spec_dict):
         if (entry_point_spec_dict['schema_version'] ==
-                cls._CURRENT_DICT_SCHEMA_VERSION):
+                cls._CURRENT_ENTRY_POINT_SCHEMA_VERSION):
             return cls(
                 entry_point_spec_dict['activity_type'],
                 entry_point_spec_dict['activity_id'])
@@ -85,7 +83,7 @@ class EntryPoint(object):
         return {
             'activity_type': self.activity_type,
             'activity_id': self.activity_id,
-            'schema_version': self._CURRENT_DICT_SCHEMA_VERSION,
+            'schema_version': self._CURRENT_ENTRY_POINT_SCHEMA_VERSION,
         }
 
 
@@ -102,7 +100,7 @@ class DestinationSpec(object):
           to show this destination. Currently takes only one value:
           DEST_DISPLAY_OPTION_ALWAYS.
     """
-    _CURRENT_DICT_SCHEMA_VERSION = 1
+    _CURRENT_DEST_SPEC_SCHEMA_VERSION = 1
 
     def __init__(self, activity_type, activity_id, display_option):
         self.activity_type = activity_type
@@ -143,7 +141,7 @@ class DestinationSpec(object):
     @classmethod
     def from_dict(cls, destination_spec_dict):
         if (destination_spec_dict['schema_version'] ==
-                cls._CURRENT_DICT_SCHEMA_VERSION):
+                cls._CURRENT_DEST_SPEC_SCHEMA_VERSION):
             return cls(
                 destination_spec_dict['activity_type'],
                 destination_spec_dict['activity_id'],
@@ -158,7 +156,7 @@ class DestinationSpec(object):
             'activity_type': self.activity_type,
             'activity_id': self.activity_id,
             'display_option': self.display_option,
-            'schema_version': self._CURRENT_DICT_SCHEMA_VERSION,
+            'schema_version': self._CURRENT_DEST_SPEC_SCHEMA_VERSION,
         }
 
 
@@ -171,7 +169,7 @@ class ActivitySpec(object):
           a possible recommended destination that is shown to the learner when
           they complete the activity.
     """
-    _CURRENT_DICT_SCHEMA_VERSION = 1
+    _CURRENT_ACTIVITY_SPEC_SCHEMA_VERSION = 1
 
     def __init__(self, destination_specs):
         self.destination_specs = destination_specs
@@ -185,6 +183,10 @@ class ActivitySpec(object):
                 'Invalid destination_specs: %s' % self.destination_specs)
 
         for dest_spec in self.destination_specs:
+            if not isinstance(dest_spec, DestinationSpec):
+                raise utils.ValidationError(
+                    'Expected dest_spec to be an instance of DestinationSpec, '
+                    'received %s' % dest_spec)
             dest_spec.validate()
 
         # Check that all destinations are unique.
@@ -199,8 +201,11 @@ class ActivitySpec(object):
     @classmethod
     def from_dict(cls, activity_spec_dict):
         if (activity_spec_dict['schema_version'] ==
-                cls._CURRENT_DICT_SCHEMA_VERSION):
-            return cls(activity_spec_dict['destination_specs'])
+                cls._CURRENT_ACTIVITY_SPEC_SCHEMA_VERSION):
+            return cls([
+                DestinationSpec.from_dict(dest_spec_dict)
+                for dest_spec_dict in activity_spec_dict['destination_specs']
+            ])
         else:
             raise Exception(
                 'Invalid activity specification dict: %s' %
@@ -211,7 +216,7 @@ class ActivitySpec(object):
             'destination_specs': [
                 DestinationSpec.to_dict(dest_spec)
                 for dest_spec in self.destination_specs],
-            'schema_version': self._CURRENT_DICT_SCHEMA_VERSION,
+            'schema_version': self._CURRENT_ACTIVITY_SPEC_SCHEMA_VERSION,
         }
 
     @classmethod
@@ -228,7 +233,7 @@ class AdventureSpec(object):
       - adventure_specs: dict whose keys are adventure ids and whose
           corresponding values are ActivitySpecs.
     """
-    _CURRENT_DICT_SCHEMA_VERSION = 1
+    _CURRENT_ADVENTURE_SPEC_SCHEMA_VERSION = 1
 
     def __init__(self, exploration_specs, adventure_specs):
         self.exploration_specs = exploration_specs
@@ -265,15 +270,15 @@ class AdventureSpec(object):
     @classmethod
     def from_dict(cls, specification_dict):
         if (specification_dict['schema_version'] ==
-                cls._CURRENT_DICT_SCHEMA_VERSION):
+                cls._CURRENT_ADVENTURE_SPEC_SCHEMA_VERSION):
             return cls({
                 exp_id: ActivitySpec.from_dict(exp_spec_dict)
                 for (exp_id, exp_spec_dict) in
-                specification_dict['explorations'].iteritems()
+                specification_dict['exploration_specs'].iteritems()
             }, {
                 adv_id: ActivitySpec.from_dict(adv_spec_dict)
                 for (adv_id, adv_spec_dict) in
-                specification_dict['adventures'].iteritems()
+                specification_dict['adventure_specs'].iteritems()
             })
         else:
             raise Exception(
@@ -282,15 +287,15 @@ class AdventureSpec(object):
 
     def to_dict(self):
         return {
-            'adventures': {
-                adv_id: adv_dests.to_list() for
-                (adv_id, adv_dests) in self.adventure_specs.iteritems()
+            'adventure_specs': {
+                adv_id: adv_spec.to_dict() for
+                (adv_id, adv_spec) in self.adventure_specs.iteritems()
             },
-            'explorations': {
-                exp_id: exp_dests.to_list() for
-                (exp_id, exp_dests) in self.exploration_specs.iteritems()
+            'exploration_specs': {
+                exp_id: exp_spec.to_dict() for
+                (exp_id, exp_spec) in self.exploration_specs.iteritems()
             },
-            'schema_version': self._CURRENT_DICT_SCHEMA_VERSION,
+            'schema_version': self._CURRENT_ADVENTURE_SPEC_SCHEMA_VERSION,
         }
 
     @classmethod
@@ -306,6 +311,14 @@ class AdventureSpec(object):
         else:
             raise Exception('Unrecognized activity type: %s' % activity_type)
 
+    def require_only_contains_explorations(self):
+        """Raises ValidationError if the adventure contains any
+        sub-adventures.
+        """
+        if self.adventure_specs.keys():
+            raise utils.ValidationError(
+                'Adventures within an adventure are not currently supported.')
+
     def validate(self):
         # Validate the exploration_specs dict.
         if not isinstance(self.exploration_specs, dict):
@@ -319,6 +332,13 @@ class AdventureSpec(object):
                     'Expected keys of exploration_specs to be strings, '
                     'received %s' % exp_id)
 
+        exp_ids = self.exploration_specs.keys()
+        explorations = activity_models.ExplorationModel.get_multi(exp_ids)
+        for ind, exp_id in enumerate(exp_ids):
+            if explorations[ind] is None:
+                raise utils.ValidationError(
+                    'Could not find exploration with id %s' % exp_id)
+
         # Validate the adventure_specs dict.
         if not isinstance(self.adventure_specs, dict):
             raise utils.ValidationError(
@@ -331,12 +351,25 @@ class AdventureSpec(object):
                     'Expected keys of adventure_specs to be strings, '
                     'received %s' % adv_id)
 
+        adv_ids = self.adventure_specs.keys()
+        adventures = activity_models.AdventureModel.get_multi(exp_ids)
+        for ind, adv_id in enumerate(adv_ids):
+            if adventures[ind] is None:
+                raise utils.ValidationError(
+                    'Could not find adventure with id %s' % adv_id)
+
 
 class Adventure(object):
     """Domain object for an Oppia adventure."""
 
+    # The current version of the adventure schema. If any backward-
+    # incompatible changes are made to the exploration schema in the YAML
+    # definitions, this version number must be changed and a migration process
+    # put in place.
+    _CURRENT_ADVENTURE_SCHEMA_VERSION = 1
+
     def __init__(self, adventure_id, title, category, objective,
-                 language_code, blurb, entry_points_list, specification_dict,
+                 language_code, blurb, entry_points, specification,
                  version, created_on=None, last_updated=None):
         self.id = adventure_id
         self.title = title
@@ -344,10 +377,11 @@ class Adventure(object):
         self.objective = objective
         self.language_code = language_code
         self.blurb = blurb
-        self.entry_points = [
-            EntryPoint.from_dict(ep_dict) for
-            ep_dict in entry_points_list]
-        self.specification = AdventureSpec.from_dict(specification_dict)
+        # The first entry point in this list is considered to be the
+        # 'preferred' one, and is used when there is no other disambiguation
+        # mechanism.
+        self.entry_points = entry_points
+        self.specification = specification
         self.version = version
         self.created_on = created_on
         self.last_updated = last_updated
@@ -358,7 +392,7 @@ class Adventure(object):
             language_code=feconf.DEFAULT_LANGUAGE_CODE):
         return cls(
             adventure_id, title, category, objective, language_code, '',
-            [], AdventureSpec.create_default().to_dict(), 0)
+            [], AdventureSpec.create_default(), 0)
 
     def is_playable(self):
         """Whether this adventure has been fully specified and can be shown
@@ -371,11 +405,16 @@ class Adventure(object):
         # TODO(sll): Implement the following checks:
         # - Check that at least one entry point is specified.
         # - Check that at least two activities exist.
-        # - Check that the graph of activities is directed and acyclic.
         # - Check that each activity is reachable from at least one entry
         #     point.
         # - Check that all destinations in the adventure specification are
-        #     fully specified.
+        #     fully specified and that they exist within the specification.
+        # - Check that all activities are actually specified (i.e., there are
+        #     no stubs).
+        # - Check that all activities exist and are publicly-viewable.
+        #
+        # Note that this is an *addition* to the standard validation, and does
+        # not replace it.
         return True
 
     def validate(self):
@@ -446,6 +485,13 @@ class Adventure(object):
                         entry_point.activity_type, entry_point.activity_id,
                         self.id))
 
+        # Check that the recursive graph of adventures is a tree (each node has
+        # exactly one parent) with depth at most 1. This implies that the
+        # adventure only contains explorations (and no sub-adventures). We may
+        # extend this later to include sub-adventures and general directed
+        # graphs.
+        self.specification.require_only_contains_explorations()
+
         # Check that the specification dict entries are valid.
         self.specification.validate()
 
@@ -515,14 +561,8 @@ class Adventure(object):
             len(self.specification.exploration_specs.keys()) +
             len(self.specification.adventure_specs.keys()))
 
-    # The current version of the adventure schema. If any backward-
-    # incompatible changes are made to the exploration schema in the YAML
-    # definitions, this version number must be changed and a migration process
-    # put in place.
-    _CURRENT_ADVENTURE_SCHEMA_VERSION = 1
-
     @classmethod
-    def from_yaml(cls, adventure_id):
+    def from_yaml(cls, adventure_id, yaml_content):
         """Creates and returns an adventure from a YAML text string.
 
         The client should ensure that the adventure_id does not duplicate ids
@@ -546,8 +586,10 @@ class Adventure(object):
         adventure = cls(
             adventure_id, adventure_dict['title'], adventure_dict['category'],
             adventure_dict['objective'], adventure_dict['language_code'],
-            adventure_dict['blurb'], adventure_dict['entry_points'],
-            Specification.from_dict(adventure_dict['specification']),
+            adventure_dict['blurb'],
+            [EntryPoint.from_dict(ep)
+             for ep in adventure_dict['entry_points']],
+            AdventureSpec.from_dict(adventure_dict['specification']),
             None)
 
         return adventure
@@ -562,6 +604,6 @@ class Adventure(object):
             'language_code': self.language_code,
             'objective': self.objective,
             'schema_version': self._CURRENT_ADVENTURE_SCHEMA_VERSION,
-            'specification': Specification.to_dict(self.specification),
+            'specification': AdventureSpec.to_dict(self.specification),
             'title': self.title,
         })
