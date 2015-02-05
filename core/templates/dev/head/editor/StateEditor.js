@@ -21,9 +21,11 @@
 oppia.controller('StateEditor', [
   '$scope', '$rootScope', 'editorContextService', 'changeListService',
   'editabilityService', 'explorationStatesService', 'routerService',
+  'statesSequenceService',
   function(
     $scope, $rootScope, editorContextService, changeListService,
-    editabilityService, explorationStatesService, routerService) {
+    editabilityService, explorationStatesService, routerService,
+    statesSequenceService) {
 
   $scope.STATE_CONTENT_SCHEMA = {
     type: 'html',
@@ -46,23 +48,25 @@ oppia.controller('StateEditor', [
     // This should only be non-null when the content editor is open.
     $scope.contentMemento = null;
 
-    $scope.nextStateName = null;
+    var dominatorTrees = statesSequenceService.getDominatorTrees();
+    $scope.nextStateName = dominatorTrees.reverseDoms[$scope.stateName];
+    if ($scope.nextStateName == 'END' || $scope.nextStateName == $scope.stateName) {
+      $scope.nextStateName = null;
+    }
     $scope.nextStateContent = null;
+    if ($scope.nextStateName !== null) {
+      $scope.nextStateContent = explorationStatesService.getState(
+        $scope.nextStateName).content[0].value;
+    }
 
-    for (var i = 0; i < stateData.interaction.handlers.length; i++) {
-      if ($scope.nextStateName) {
-        break;
-      }
-
-      var handler = stateData.interaction.handlers[i];
-      for (var j = 0; j < handler.rule_specs.length; j++) {
-        if (handler.rule_specs[j].dest !== 'END' && handler.rule_specs[j].dest !== $scope.stateName) {
-          $scope.nextStateName = handler.rule_specs[j].dest;
-          $scope.nextStateContent = explorationStatesService.getState(
-            $scope.nextStateName).content[0].value;
-          break;
-        }
-      }
+    $scope.previousStateName = dominatorTrees.forwardDoms[$scope.stateName];
+    if ($scope.previousStateName == 'END' || $scope.previousStateName == $scope.stateName) {
+      $scope.previousStateName = null;
+    }
+    $scope.previousStateContent = null;
+    if ($scope.previousStateName !== null) {
+      $scope.previousStateContent = explorationStatesService.getState(
+        $scope.previousStateName).content[0].value;
     }
 
     if ($scope.stateName && stateData) {

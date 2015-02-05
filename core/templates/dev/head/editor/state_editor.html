@@ -1,4 +1,24 @@
 <div ng-controller="StateEditor">
+  <md-card class="oppia-state-card" ng-if="previousStateName" ng-click="navigateToState(previousStateName)">
+    <div class="row">
+      <div class="pull-right">
+        <div class="oppia-state-editor-header">
+          <div class="oppia-state-name-container">
+            <strong><[previousStateName]></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="oppia-state-editor-body">
+      <div class="oppia-editor">
+        <div>
+          <[previousStateContent|truncate]>
+        </div>
+      </div>
+    </div>
+  </md-card>
+
   <md-card class="oppia-state-card">
     <div class="oppia-state-editor-body">
       <div class="oppia-editor" ng-show="!!stateName">

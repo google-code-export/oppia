@@ -122,6 +122,8 @@ oppia.controller('ExplorationEditor', [
 
       graphDataService.recompute();
 
+      statesSequenceService.init(data.init_state_name, data.states);
+
       if (!editorContextService.getActiveStateName() ||
           !explorationStatesService.getState(editorContextService.getActiveStateName())) {
         editorContextService.setActiveStateName(explorationInitStateNameService.displayed);
@@ -148,8 +150,6 @@ oppia.controller('ExplorationEditor', [
       }
 
       stateEditorTutorialFirstTimeService.init(data.show_state_editor_tutorial_on_load, $scope.explorationId);
-
-      statesSequenceService.init(data.init_state_name, data.states);
     });
   };
 

@@ -1255,6 +1255,8 @@ oppia.factory('statesSequenceService', ['explorationData',
     getGraphData: function() {
       return graphData;
     },
+    // forwardDoms[state] = the next state that must be passed through to END from state
+    // reverseDoms[state] = the last state that must be passed through from start to state
     getDominatorTrees: function() {
       return {
         forwardDoms: forwardDoms,
