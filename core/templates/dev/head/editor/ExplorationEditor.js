@@ -31,6 +31,7 @@ oppia.controller('ExplorationEditor', [
   'interactionRepositoryService', 'explorationStatesService', 'routerService',
   'graphDataService', 'stateEditorTutorialFirstTimeService',
   'explorationParamSpecsService', 'explorationWarningsService',
+  'statesSequenceService',
   function(
     $scope, $http, $window, $rootScope, $log, $timeout,
     explorationData,  editorContextService, explorationTitleService,
@@ -39,7 +40,8 @@ oppia.controller('ExplorationEditor', [
     explorationInitStateNameService, editabilityService,
     interactionRepositoryService, explorationStatesService, routerService,
     graphDataService,  stateEditorTutorialFirstTimeService,
-    explorationParamSpecsService, explorationWarningsService) {
+    explorationParamSpecsService, explorationWarningsService,
+    statesSequenceService) {
 
   $scope.editabilityService = editabilityService;
   $scope.editorContextService = editorContextService;
@@ -146,6 +148,8 @@ oppia.controller('ExplorationEditor', [
       }
 
       stateEditorTutorialFirstTimeService.init(data.show_state_editor_tutorial_on_load, $scope.explorationId);
+
+      statesSequenceService.init(data.init_state_name, data.states);
     });
   };
 

@@ -1056,3 +1056,210 @@ oppia.factory('explorationWarningsService', [
     }
   };
 }]);
+
+oppia.factory('statesSequenceService', ['explorationData',
+    function(explorationData) {
+  var graphData = null;
+  var forwardDoms = null;
+  var reverseDoms = null;
+
+  // DFS to calculate post order
+  var _dfs = function(currentNode, adjList, visited, postOrder) {
+    if (visited[currentNode] === true) return;
+    visited[currentNode] = true;
+    for (var i = 0; i < adjList[currentNode].length; i++) {
+      _dfs(adjList[currentNode][i], adjList, visited, postOrder);
+    }
+    postOrder.push(currentNode);
+  };
+
+  // IDs nodes by postorder, generates object of {stateName: ID} and
+  // adjacency list and reverse adj list using node IDs
+  var _computeGraphData = function(initStateName, states) {
+    var nodes = {};
+    var adjList = {};
+    var reverseAdjList = {};
+    var adjMatrix = {}; // adj matrix to ensure at most 1 edge between 2 nodes
+    adjMatrix[END_DEST] = {};
+    adjList[END_DEST] = [];
+    reverseAdjList[END_DEST] = [];
+    nodes[END_DEST] = END_DEST;
+    for (var stateName in states) {
+      reverseAdjList[stateName] = [];
+    }
+    for (var stateName in states) {
+      nodes[stateName] = stateName;
+      adjList[stateName] = [];
+      adjMatrix[stateName] = {};
+      for (var stateName2 in states) {
+        adjMatrix[stateName][stateName2] = false;
+      }
+      adjMatrix[stateName][END_DEST] = false;
+
+      var handlers = states[stateName].interaction.handlers;
+      for (var h = 0; h < handlers.length; h++) {
+        var ruleSpecs = handlers[h].rule_specs;
+        for (i = 0; i < ruleSpecs.length; i++) {
+          if (stateName == ruleSpecs[i].dest) continue;
+          adjMatrix[stateName][ruleSpecs[i].dest] = true;
+        }
+      }
+
+      for (var stateName2 in states) {
+        if (adjMatrix[stateName][stateName2]) {
+          adjList[stateName].push(stateName2);
+          reverseAdjList[stateName2].push(stateName);
+        }
+      }
+      if (adjMatrix[stateName][END_DEST]) {
+        adjList[stateName].push(END_DEST);
+        reverseAdjList[END_DEST].push(stateName);
+      }
+    }
+
+    var visited = {};
+    for (var stateName in states) {
+      visited[stateName] = false;
+    }
+    var postOrder = [];
+    _dfs(initStateName, adjList, visited, postOrder);
+
+    // number in postorder
+    // Note: both adjList and reverseAdjList have nodes numbered in postorder
+    // of the forward and reverse graph respectively
+    var returnedReverseAdjList = [];
+    var numberOfStates = postOrder.length;
+    for (var i = 0; i < numberOfStates; i++) {
+      nodes[postOrder[i]] = i;
+      returnedReverseAdjList.push([]);
+    }
+    for (var stateName in states) {
+      for (var stateName2 in states) {
+        if (adjMatrix[stateName][stateName2]) {
+          returnedReverseAdjList[nodes[stateName2]].push(nodes[stateName]);
+        }
+      }
+      if (adjMatrix[stateName][END_DEST]) {
+        returnedReverseAdjList[nodes[END_DEST]].push(nodes[stateName]);
+      }
+    }
+    var forwardNodes = {};
+    for (var stateName in states) {
+      forwardNodes[nodes[stateName]] = stateName;
+    }
+    forwardNodes[nodes[END_DEST]] = END_DEST;
+
+    visited = {};
+    for (var stateName in states) {
+      visited[stateName] = false;
+    }
+    postOrder = [];
+    _dfs(END_DEST, reverseAdjList, visited, postOrder);
+
+    // number in postorder
+    var returnedAdjList = [];
+    var numberOfStates = postOrder.length;
+    for (var i = 0; i < numberOfStates; i++) {
+      nodes[postOrder[i]] = i;
+      returnedAdjList.push([]);
+    }
+    for (var stateName in states) {
+      for (var stateName2 in states) {
+        if (adjMatrix[stateName][stateName2]) {
+          returnedAdjList[nodes[stateName]].push(nodes[stateName2]);
+        }
+      }
+      if (adjMatrix[stateName][END_DEST]) {
+        returnedAdjList[nodes[stateName]].push(nodes[END_DEST]);
+      }
+    }
+    var reverseNodes = {};
+    for (var stateName in states) {
+      reverseNodes[nodes[stateName]] = stateName;
+    }
+    reverseNodes[nodes[END_DEST]] = END_DEST;
+
+    return {
+      forwardNodes: forwardNodes,
+      reverseNodes: reverseNodes,
+      adjList: returnedAdjList,
+      reverseAdjList: returnedReverseAdjList
+    };
+  };
+
+  // helper function for dominator tree
+  var _intersect = function(n1, n2, doms) {
+    var b1 = n1;
+    var b2 = n2;
+    while (b1 != b2) {
+      while (b1 < b2) {
+        b1 = doms[b1];
+      }
+      while (b2 < b1) {
+        b2 = doms[b2];
+      }
+    }
+    return b1;
+  };
+
+  // returns dominator tree as an array of length N, where doms[i] is the
+  // immediate dominator of node i
+  var _computeDominatorTree = function(reverseAdjList) {
+    var doms = [];
+    for (var i = 0; i < reverseAdjList.length; i++) {
+      doms[i] = undefined;
+    }
+    var root = reverseAdjList.length - 1;
+    doms[root] = root;
+    var changed = true;
+    while (changed) {
+      changed = false;
+      for (var currentNode = reverseAdjList.length - 2; currentNode >= 0; currentNode--) {
+        var new_idom = null;
+        for (var i = 0; i < reverseAdjList[currentNode].length; i++) {
+          if (reverseAdjList[currentNode][i] > currentNode) {
+            // found a processed node
+            new_idom = reverseAdjList[currentNode][i];
+            break;
+          }
+        }
+        for (var i = 0; i < reverseAdjList[currentNode].length; i++) {
+          var p = reverseAdjList[currentNode][i];
+          if (doms[p] !== undefined) {
+            new_idom = _intersect(p, new_idom, doms);
+          }
+        }
+        if (doms[currentNode] != new_idom) {
+          doms[currentNode] = new_idom;
+          changed = true;
+        }
+      }
+    }
+    return doms;
+  };
+
+  return {
+    init: function(initStateName, states) {
+      graphData = _computeGraphData(initStateName, states);
+      var tempForwardDoms = _computeDominatorTree(graphData.reverseAdjList);
+      var tempReverseDoms = _computeDominatorTree(graphData.adjList);
+      forwardDoms = {};
+      reverseDoms = {};
+      for (var i = 0; i < tempForwardDoms.length; i++) {
+        forwardDoms[graphData.forwardNodes[i]] = graphData.forwardNodes[tempForwardDoms[i]];
+      }
+      for (var i = 0; i < tempReverseDoms.length; i++) {
+        reverseDoms[graphData.reverseNodes[i]] = graphData.reverseNodes[tempReverseDoms[i]];
+      }
+    },
+    getGraphData: function() {
+      return graphData;
+    },
+    getDominatorTrees: function() {
+      return {
+        forwardDoms: forwardDoms,
+        reverseDoms: reverseDoms
+      };
+    }
+  };
+}]);
