@@ -1,83 +1,96 @@
 <div ng-controller="StateEditor">
-  <md-card class="oppia-state-card oppia-state-previous-card" ng-if="previousStateName" ng-click="navigateToState(previousStateName)">
-    <div class="row">
-      <div class="pull-right">
-        <div class="oppia-state-editor-header">
-          <div class="oppia-state-name-container">
-            <strong><[previousStateName]></strong>
+  <div class="row">
+    <div class="col-md-10">
+      <md-card class="oppia-state-card oppia-state-previous-card" ng-if="previousStateName" ng-click="navigateToState(previousStateName)">
+        <div class="row">
+          <div class="pull-right">
+            <div class="oppia-state-editor-header">
+              <div class="oppia-state-name-container">
+                <strong><[previousStateName]></strong>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="oppia-state-editor-body">
-      <div class="oppia-editor">
-        <div>
-          <[previousStateContent|truncate]>
-        </div>
-      </div>
-    </div>
-  </md-card>
-
-  <md-card class="oppia-state-card oppia-state-previous-card" ng-hide="previousStateName">
-    <div class="row">
-      <div class="pull-right">
-        <div class="oppia-state-editor-header">
-          <div class="oppia-state-name-container">
-            <strong>START</strong>
+        <div class="oppia-state-editor-body">
+          <div class="oppia-editor">
+            <div>
+              <[previousStateContent|truncate]>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </md-card>
+      </md-card>
 
-  <md-card class="oppia-state-card">
-    <div class="oppia-state-editor-body">
-      <div class="oppia-editor" ng-show="!!stateName">
-        {% include 'editor/state_editor_parameters.html' %}
-        <div>
-          {% include 'editor/state_editor_content.html' %}
-        </div>
-        <div ng-controller="StateInteraction">
-          {% include 'editor/state_editor_interaction.html' %}
-          <hr>
-          <div>
-            {% include 'editor/state_editor_rules.html' %}
+      <md-card class="oppia-state-card oppia-state-previous-card" ng-hide="previousStateName">
+        <div class="row">
+          <div class="pull-right">
+            <div class="oppia-state-editor-header">
+              <div class="oppia-state-name-container">
+                <strong>START</strong>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-  </md-card>
+      </md-card>
 
-  <md-card class="oppia-state-card oppia-state-next-card" ng-if="nextStateName" ng-click="navigateToState(nextStateName)">
-    <div class="row">
-      <div class="pull-right">
-        <div class="oppia-state-editor-header">
-          <div class="oppia-state-name-container">
-            <strong><[nextStateName]></strong>
+      <md-card class="oppia-state-card">
+        <div class="oppia-state-editor-body">
+          <div class="oppia-editor" ng-show="!!stateName">
+            {% include 'editor/state_editor_parameters.html' %}
+            <div>
+              {% include 'editor/state_editor_content.html' %}
+            </div>
+            <div ng-controller="StateInteraction">
+              {% include 'editor/state_editor_interaction.html' %}
+              <hr>
+              <div>
+                {% include 'editor/state_editor_rules.html' %}
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </md-card>
 
-    <div class="oppia-state-editor-body">
-      <div class="oppia-editor">
-        <div>
-          <[nextStateContent|truncate]>
-        </div>
-      </div>
-    </div>
-  </md-card>
-
-  <md-card class="oppia-state-card oppia-state-next-card" ng-hide="nextStateName">
-    <div class="row">
-      <div class="pull-right">
-        <div class="oppia-state-editor-header">
-          <div class="oppia-state-name-container">
-            <strong>END</strong>
+      <md-card class="oppia-state-card oppia-state-next-card" ng-if="nextStateName" ng-click="navigateToState(nextStateName)">
+        <div class="row">
+          <div class="pull-right">
+            <div class="oppia-state-editor-header">
+              <div class="oppia-state-name-container">
+                <strong><[nextStateName]></strong>
+              </div>
+            </div>
           </div>
         </div>
+
+        <div class="oppia-state-editor-body">
+          <div class="oppia-editor">
+            <div>
+              <[nextStateContent|truncate]>
+            </div>
+          </div>
+        </div>
+      </md-card>
+
+      <md-card class="oppia-state-card oppia-state-next-card" ng-hide="nextStateName">
+        <div class="row">
+          <div class="pull-right">
+            <div class="oppia-state-editor-header">
+              <div class="oppia-state-name-container">
+                <strong>END</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </md-card>
+    </div>
+    <div class="col-md-2" style="height: 100%; position: fixed; right: 300px;">
+      <div class="oppia-state-navigate">
+        <ul class="nav nav-stacked nav-pills" role="tablist" ng-model="branches">
+          <li ng-repeat="state in branches">
+            <a ng-click="navigateToState($index)" href="#" class="oppia-state-navigate-link"><[state]> &rarr;</a>
+          </li>
+        </ul>
       </div>
     </div>
-  </md-card>
+  </div>
 </div>

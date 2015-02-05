@@ -69,6 +69,19 @@ oppia.controller('StateEditor', [
         $scope.previousStateName).content[0].value;
     }
 
+    var tempBranches = {}; // List of possible states (except self and nextStateName) to navigate to
+    for (var i = 0; i < stateData.interaction.handlers.length; i++) {
+      var handler = stateData.interaction.handlers[i];
+      for (var j = 0; j < handler.rule_specs.length; j++) {
+        if (handler.rule_specs[j].dest !== 'END' && handler.rule_specs[j].dest !== $scope.stateName &&
+            handler.rule_specs[j].dest !== $scope.nextStateName) {
+          tempBranches[handler.rule_specs[j].dest] = true;
+        }
+      }
+    }
+    $scope.branches = Object.keys(tempBranches);
+    console.log($scope.branches);
+
     if ($scope.stateName && stateData) {
       $rootScope.$broadcast('stateEditorInitialized', stateData);
     }
