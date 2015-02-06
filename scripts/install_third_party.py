@@ -228,6 +228,21 @@ download_files(
     NG_INFINITE_SCROLL_URL, 
     NG_INFINITE_SCROLL_DST, 
     NG_INFINITE_SCROLL_FILES)
+# Downloads Angular-Gridster libraries and JS-Element-Resize
+ANGULAR_GRIDSTER_REV = '0.11.7'
+ANGULAR_GRIDSTER_ROOT_NAME = 'angular-gridster-%s' % ANGULAR_GRIDSTER_REV
+ANGULAR_GRIDSTER_ZIP_URL = (
+    'https://github.com/ManifestWebDesign/angular-gridster/archive/v%s.zip'
+     % ANGULAR_GRIDSTER_REV)
+ANGULAR_GRIDSTER_ZIP_ROOT_NAME = ANGULAR_GRIDSTER_ROOT_NAME
+ANGULAR_GRIDSTER_TARGET_ROOT_NAME = ANGULAR_GRIDSTER_ROOT_NAME
+
+JS_DETECT_ELEMENT_RESIZE_REV = '0.5.3'
+JS_DETECT_ELEMENT_RESIZE_ROOT_NAME = 'javascript-detect-element-resize-%s' % JS_DETECT_ELEMENT_RESIZE_REV
+JS_DETECT_ELEMENT_RESIZE_ZIP_URL = (
+    'https://github.com/sdecima/javascript-detect-element-resize/archive/v%s.zip' % JS_DETECT_ELEMENT_RESIZE_REV)
+JS_DETECT_ELEMENT_RESIZE_ZIP_ROOT_NAME = JS_DETECT_ELEMENT_RESIZE_ROOT_NAME
+JS_DETECT_ELEMENT_RESIZE_TARGET_ROOT_NAME = JS_DETECT_ELEMENT_RESIZE_ROOT_NAME
 
 # Download all the frontend library zip files.
 BOWER_MATERIAL_REV = '0.6.0-rc1'
@@ -317,6 +332,18 @@ MATHJAX_ZIP_URL = (
     'https://github.com/mathjax/MathJax/archive/v%s.zip' % MATHJAX_REV)
 MATHJAX_ZIP_ROOT_NAME = MATHJAX_ROOT_NAME
 MATHJAX_TARGET_ROOT_NAME = MATHJAX_ROOT_NAME
+
+#Angular-Gridster & JS-Detect-Element Resize (will be alphabetized accordingly prior to official merge into develop.
+download_and_unzip_files(
+    ANGULAR_GRIDSTER_ZIP_URL, THIRD_PARTY_STATIC_DIR,
+    ANGULAR_GRIDSTER_ZIP_ROOT_NAME, ANGULAR_GRIDSTER_TARGET_ROOT_NAME
+)
+
+download_and_unzip_files(
+    JS_DETECT_ELEMENT_RESIZE_ZIP_URL, THIRD_PARTY_STATIC_DIR,
+    JS_DETECT_ELEMENT_RESIZE_ZIP_ROOT_NAME, JS_DETECT_ELEMENT_RESIZE_TARGET_ROOT_NAME
+)
+
 
 download_and_unzip_files(
     BOWER_MATERIAL_ZIP_URL, THIRD_PARTY_STATIC_DIR,
