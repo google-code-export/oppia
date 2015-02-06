@@ -5,15 +5,13 @@
 </style>
 
 <script type="text/ng-template" id="interaction/ItemSelectionInput">
-  <div class="multiple-choice-form-container">
-    <form ng-submit="submitAnswer(answer)">
-      <div ng-repeat="choice in choices track by $index">
-        <button type="button" class="btn btn-default" ng-click="submitAnswer($index)" style="margin: 5px 0; text-align: left; white-space: normal; max-width: 350px;">
+    <form gridster class="multiple-choice-form-container" ng-submit="submitAnswer(answer)">
+        <button gridster-item="choice" ng-repeat="choice in choices track by $index"
+        type="button" class="btn btn-default" ng-click="submitAnswer($index)"
+        style="margin: 5px 0; text-align: left; white-space: normal; max-width: 350px;">
           <span angular-html-bind="choice"></span>
         </button>
-      </div>
     </form>
-  </div>
 </script>
 
 <script type="text/ng-template" id="response/ItemSelectionInput">
