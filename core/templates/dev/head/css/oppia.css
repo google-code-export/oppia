@@ -541,7 +541,6 @@ div.wysiwyg iframe.wysiwyg-content-large {
 }
 
 .oppia-gallery-tiles-container {
-  background-color: white;
   border-radius: 3px;
   height: 100%;
   /* This is the same as the min-height in .oppia-gallery-menu. */
@@ -673,12 +672,6 @@ div.wysiwyg iframe.wysiwyg-content-large {
   z-index: 3000;
 }
 
-.oppia-editor-prerequisites-form {
-  background: #eee;
-  border-radius: 5px;
-  padding: 5px;
-}
-
 .oppia-form input.ng-invalid.ng-dirty {
   border: 2px solid #FA787E;
 }
@@ -782,16 +775,6 @@ div.wysiwyg iframe.wysiwyg-content-large {
   margin: -8px 15px 8px 15px;
 }
 
-.oppia-state-navigation-bar {
-  background: white;
-  bottom: 0;
-  height: 30px;
-  left: 0;
-  position: fixed;
-  text-align: center;
-  width: 75%;
-}
-
 .oppia-state-content {
   min-height: 20px;
   padding: 5px 0 15px 10px;
@@ -891,10 +874,8 @@ div.wysiwyg iframe.wysiwyg-content-large {
 }
 
 .oppia-add-rule-button {
-  margin-bottom: 10px;
-  margin-left: 10px;
-  margin-top: 10px;
   padding: 5px;
+  width: 100%;
 }
 
 .oppia-small-delete-button {
@@ -909,35 +890,19 @@ div.wysiwyg iframe.wysiwyg-content-large {
   right: 25px;
 }
 
-.oppia-rules-container {
-  display: table;
-  height: 100%;
-  margin-left: -115px;
-}
-
-.oppia-rule-tabs-container {
-  display: table-cell;
-  float: none;
-  padding-left: 0;
-  padding-right: 0;
-  vertical-align: top;
-  width: 100px;
-}
 .oppia-rule-tab {
   background: #eeedee;
   border-radius: 0;
   border-bottom: 1px solid #ddd;
   border-right: 1px solid #ddd;
   border-top: 1px solid #ddd;
-  width: 110px;
+  width: 100%;
 }
 .oppia-rule-tab.active {
   border-right: 0;
 }
 
-.oppia-rule-bodies-container {
-  display: table-cell;
-  float: none;
+.oppia-rule-body-container {
   padding-left: 15px;
   padding-right: 15px;
   width: 100%;
@@ -955,6 +920,17 @@ div.wysiwyg iframe.wysiwyg-content-large {
 
 .oppia-rule-editable-view {
   padding-bottom: 20px;
+}
+
+.oppia-rule-dest-link {
+  left: 0;
+  margin: 0 auto;
+  position: absolute;
+  right: 0;
+  /* This must be larger than the z-index in
+     .oppia-interactive-section-click-handler, so that the rule does not
+     switch to edit mode when the destination link is clicked. */
+  z-index: 200;
 }
 
 .oppia-rule-save-cancel-buttons {
@@ -1114,6 +1090,16 @@ oppia-parameter {
   width: 450px;
 }
 
+.oppia-gallery-interstitial {
+  background: -webkit-gradient(linear, 50 0, 50 50, from(rgba(255,255,255,.6)), to(rgba(255,255,255,1)));
+  font-size: 1.3em;
+  height: 150px;
+  margin-top: -50px;
+  padding-top: 50px;
+  text-align: center;
+  width: 100%;
+}
+
 .oppia-splash-search {
   border-left: none;
   border-radius: 28px;
@@ -1232,6 +1218,7 @@ oppia-expression-error-tag:after {
   color: #555;
   padding: 5px;
 }
+
 .oppia-feedback-tab-row {
   cursor: pointer;
 }
