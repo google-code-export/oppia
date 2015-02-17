@@ -44,7 +44,7 @@
         </li>
         <li>
           <a href="" ng-click="showEmbedExplorationModal(explorationId)">
-            <span>&lt;&gt</span>
+            <img src="/third_party/static/material-design-icons-1.0.1/ic_link_black_48dp.png">
           </a>
         </li>
       </ul>
@@ -54,11 +54,13 @@
         <span class="glyphicon glyphicon-comment"></span>
       </a>
     </li>
-    <li>
-      <a ng-href="/create/<[explorationId]>" title="Edit" target="_blank">
-        <span class="glyphicon glyphicon-pencil"></span>
-      </a>
-    </li>
+    {% if can_edit %}
+      <li>
+        <a ng-href="/create/<[explorationId]>" title="Edit" target="_blank">
+          <span class="glyphicon glyphicon-pencil"></span>
+        </a>
+      </li>
+    {% endif %}
   </ul>
 {% endblock local_top_nav_options %}
 

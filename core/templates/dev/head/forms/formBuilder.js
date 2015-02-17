@@ -256,7 +256,7 @@ oppia.directive('unicodeWithParametersEditor', ['$modal', '$log', 'warningsData'
       $scope.openEditParameterModal = function(currentParamName, eltToReplace) {
         return $modal.open({
           templateUrl: 'modals/editParamName',
-          backdrop: 'static',
+          backdrop: true,
           resolve: {
             allowedParameterNames: function() {
               return $scope.allowedParameterNames();
@@ -585,7 +585,7 @@ oppia.directive('richTextEditor', [
         $scope.openRteCustomizationModal = function(componentDefn, attrsCustomizationArgsDict) {
           $modal.open({
             templateUrl: 'modals/customizeRteComponent',
-            backdrop: 'static',
+            backdrop: true,
             resolve: {
               componentDefn: function() {
                 return componentDefn;
@@ -954,7 +954,8 @@ oppia.directive('schemaBasedEditor', [function() {
       localValue: '=',
       allowExpressions: '&',
       labelForFocusTarget: '&',
-      onInputBlur: '='
+      onInputBlur: '=',
+      onInputFocus: '='
     },
     templateUrl: 'schemaBasedEditor/master',
     restrict: 'E'
@@ -1036,7 +1037,8 @@ oppia.directive('schemaBasedIntEditor', [function() {
       allowExpressions: '&',
       validators: '&',
       labelForFocusTarget: '&',
-      onInputBlur: '='
+      onInputBlur: '=',
+      onInputFocus: '='
     },
     templateUrl: 'schemaBasedEditor/int',
     restrict: 'E',
@@ -1076,11 +1078,31 @@ oppia.directive('schemaBasedFloatEditor', [function() {
       allowExpressions: '&',
       validators: '&',
       labelForFocusTarget: '&',
-      onInputBlur: '='
+      onInputBlur: '=',
+      onInputFocus: '='
     },
     templateUrl: 'schemaBasedEditor/float',
     restrict: 'E',
-    controller: ['$scope', 'parameterSpecsService', function($scope, parameterSpecsService) {
+    controller: ['$scope', '$timeout', 'parameterSpecsService', function($scope, $timeout, parameterSpecsService) {
+      $scope.hasLoaded = false;
+      $scope.isInputInFocus = false;
+      $scope.hasFocusedAtLeastOnce = false;
+
+      $scope.onFocus = function() {
+        $scope.isInputInFocus = true;
+        $scope.hasFocusedAtLeastOnce = true;
+        if ($scope.onInputFocus) {
+          $scope.onInputFocus();
+        }
+      };
+
+      $scope.onBlur = function() {
+        $scope.isInputInFocus = false;
+        if ($scope.onInputBlur) {
+          $scope.onInputBlur();
+        }
+      };
+
       // TODO(sll): Move these to ng-messages when we move to Angular 1.3.
       $scope.getMinValue = function() {
         for (var i = 0; i < $scope.validators().length; i++) {
@@ -1088,7 +1110,7 @@ oppia.directive('schemaBasedFloatEditor', [function() {
             return $scope.validators()[i].min_value;
           }
         }
-      }
+      };
 
       $scope.getMaxValue = function() {
         for (var i = 0; i < $scope.validators().length; i++) {
@@ -1096,7 +1118,7 @@ oppia.directive('schemaBasedFloatEditor', [function() {
             return $scope.validators()[i].max_value;
           }
         }
-      }
+      };
 
       $scope.onKeypress = function(evt) {
         if (evt.keyCode === 13) {
@@ -1121,6 +1143,12 @@ oppia.directive('schemaBasedFloatEditor', [function() {
           $scope.localValue = $scope.expressionMode ? $scope.paramNames[0] : 0.0;
         };
       }
+
+      // This prevents the red 'invalid input' warning message from flashing
+      // at the outset.
+      $timeout(function() {
+        $scope.hasLoaded = true;
+      });
     }]
   };
 }]);
@@ -1134,7 +1162,8 @@ oppia.directive('schemaBasedUnicodeEditor', [function() {
       uiConfig: '&',
       allowExpressions: '&',
       labelForFocusTarget: '&',
-      onInputBlur: '='
+      onInputBlur: '=',
+      onInputFocus: '='
     },
     templateUrl: 'schemaBasedEditor/unicode',
     restrict: 'E',
@@ -1283,6 +1312,7 @@ oppia.directive('schemaBasedListEditor', [
         return index === 0 ? baseFocusLabel : baseFocusLabel + index.toString();
       }
 
+      $scope.isAddItemButtonPresent = true;
       $scope.addElementText = 'Add element';
       if ($scope.uiConfig() && $scope.uiConfig().add_element_text) {
         $scope.addElementText = $scope.uiConfig().add_element_text;
@@ -1307,18 +1337,32 @@ oppia.directive('schemaBasedListEditor', [
 
       if ($scope.len === undefined) {
         $scope.addElement = function() {
+          $scope.hideAddItemButton();
           $scope.localValue.push(
             schemaDefaultValueService.getDefaultValue($scope.itemSchema()));
           focusService.setFocus($scope.getFocusLabel($scope.localValue.length - 1));
         };
 
-        $scope.deleteLastElementIfUndefined = function() {
+        var _deleteLastElementIfUndefined = function() {
           var lastValueIndex = $scope.localValue.length - 1;
           var valueToConsiderUndefined = (
             schemaUndefinedLastElementService.getUndefinedValue($scope.itemSchema()));
           if ($scope.localValue[lastValueIndex] === valueToConsiderUndefined) {
             $scope.deleteElement(lastValueIndex);
           }
+        };
+
+        $scope.lastElementOnBlur = function() {
+          _deleteLastElementIfUndefined();
+          $scope.showAddItemButton();
+        };
+
+        $scope.showAddItemButton = function() {
+          $scope.isAddItemButtonPresent = true;
+        };
+
+        $scope.hideAddItemButton = function() {
+          $scope.isAddItemButtonPresent = false;
         };
 
         $scope._onChildFormSubmit = function(evt) {

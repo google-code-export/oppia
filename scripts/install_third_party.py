@@ -159,15 +159,19 @@ UI_BOOTSTRAP_FILES = [
     for suffix in ['js', 'min.js']]
 
 MATERIAL_DESIGN_ICONS_REV = '1.0.1'
+MATERIAL_DESIGN_ICONS_CONTENT_URL = (
+    'https://raw.githubusercontent.com/google/material-design-icons/%s/content/drawable-xxxhdpi'
+    % MATERIAL_DESIGN_ICONS_REV)
 MATERIAL_DESIGN_ICONS_NAVIGATION_URL = (
     'https://raw.githubusercontent.com/google/material-design-icons/%s/navigation/drawable-xxxhdpi'
     % MATERIAL_DESIGN_ICONS_REV)
 MATERIAL_DESIGN_ICONS_DST = os.path.join(
     THIRD_PARTY_STATIC_DIR,
     'material-design-icons-%s' % MATERIAL_DESIGN_ICONS_REV)
+MATERIAL_DESIGN_ICON_CONTENT_FILES = ['ic_link_black_48dp.png']
 MATERIAL_DESIGN_ICON_NAVIGATION_FILES = ['ic_more_vert_black_48dp.png']
 
-# Note that Angular 1.3.0 requires a jQuery version that is >= 2.1.1.
+# Note that Angular 1.3 requires a jQuery version that is >= 2.1.1.
 JQUERY_REV = '2.1.1'
 JQUERY_URL = 'https://ajax.googleapis.com/ajax/libs/jquery/%s' % JQUERY_REV
 JQUERY_DST = os.path.join(THIRD_PARTY_STATIC_DIR, 'jquery-%s' % JQUERY_REV)
@@ -180,7 +184,7 @@ JQUERYUI_DST = os.path.join(
     THIRD_PARTY_STATIC_DIR, 'jqueryui-%s' % JQUERYUI_REV)
 JQUERYUI_FILES = ['jquery-ui.min.js']
 
-ANGULAR_REV = '1.3.0-rc.5'
+ANGULAR_REV = '1.3.13'
 ANGULAR_URL = (
     'https://ajax.googleapis.com/ajax/libs/angularjs/%s' % ANGULAR_REV)
 ANGULAR_TEST_URL = 'https://code.angularjs.org/%s' % ANGULAR_REV
@@ -213,8 +217,10 @@ download_files(ANGULAR_URL, ANGULAR_DST, ANGULAR_FILES)
 download_files(ANGULAR_TEST_URL, ANGULAR_DST, ANGULAR_TEST_FILES)
 download_files(D3_URL, D3_DST, D3_FILES)
 download_files(
-    MATERIAL_DESIGN_ICONS_NAVIGATION_URL,
-    MATERIAL_DESIGN_ICONS_DST,
+    MATERIAL_DESIGN_ICONS_CONTENT_URL, MATERIAL_DESIGN_ICONS_DST,
+    MATERIAL_DESIGN_ICON_CONTENT_FILES)
+download_files(
+    MATERIAL_DESIGN_ICONS_NAVIGATION_URL, MATERIAL_DESIGN_ICONS_DST,
     MATERIAL_DESIGN_ICON_NAVIGATION_FILES)
 download_files(
     NG_INFINITE_SCROLL_URL,
@@ -304,11 +310,11 @@ UI_SORTABLE_ZIP_URL = (
 UI_SORTABLE_ZIP_ROOT_NAME = 'ui-sortable-src%s' % UI_SORTABLE_REV
 UI_SORTABLE_TARGET_ROOT_NAME = 'ui-sortable-%s' % UI_SORTABLE_REV
 
-INTRO_JS_REV = '1.0.0'
-INTRO_JS_ZIP_URL = (
-    'https://github.com/usablica/intro.js/archive/v%s.zip' % INTRO_JS_REV)
-INTRO_JS_ZIP_ROOT_NAME = 'intro.js-%s' % INTRO_JS_REV
-INTRO_JS_TARGET_ROOT_NAME = 'intro-js-%s' % INTRO_JS_REV
+NG_JOYRIDE_REV = '0.1.11'
+NG_JOYRIDE_ZIP_URL = (
+    'https://github.com/abhikmitra/ng-joyride/archive/%s.zip' % NG_JOYRIDE_REV)
+NG_JOYRIDE_ZIP_ROOT_NAME = 'ng-joyride-%s' % NG_JOYRIDE_REV
+NG_JOYRIDE_TARGET_ROOT_NAME = 'ng-joyride-%s' % NG_JOYRIDE_REV
 
 BOOTSTRAP_REV = '3.1.1'
 BOOTSTRAP_ROOT_NAME = 'bootstrap-%s-dist' % BOOTSTRAP_REV
@@ -369,8 +375,8 @@ download_and_unzip_files(
     UI_SORTABLE_ZIP_URL, THIRD_PARTY_STATIC_DIR,
     UI_SORTABLE_ZIP_ROOT_NAME, UI_SORTABLE_TARGET_ROOT_NAME)
 download_and_unzip_files(
-    INTRO_JS_ZIP_URL, THIRD_PARTY_STATIC_DIR,
-    INTRO_JS_ZIP_ROOT_NAME, INTRO_JS_TARGET_ROOT_NAME)
+    NG_JOYRIDE_ZIP_URL, THIRD_PARTY_STATIC_DIR,
+    NG_JOYRIDE_ZIP_ROOT_NAME, NG_JOYRIDE_TARGET_ROOT_NAME)
 download_and_unzip_files(
     BOOTSTRAP_ZIP_URL, THIRD_PARTY_STATIC_DIR,
     BOOTSTRAP_ZIP_ROOT_NAME, BOOTSTRAP_TARGET_ROOT_NAME)

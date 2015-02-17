@@ -19,10 +19,10 @@
  */
 
 oppia.factory('routerService', [
-    '$rootScope', '$location', '$interval', '$log', 'explorationInitStateNameService',
+    '$rootScope', '$location', '$window', '$timeout', '$interval', '$log', 'explorationInitStateNameService',
     'editorContextService', 'explorationStatesService', 'oppiaPlayerService',
     'explorationParamSpecsService', 'explorationTitleService', 'explorationData',
-    function($rootScope, $location, $interval, $log, explorationInitStateNameService,
+    function($rootScope, $location, $window, $timeout, $interval, $log, explorationInitStateNameService,
              editorContextService, explorationStatesService, oppiaPlayerService,
              explorationParamSpecsService, explorationTitleService, explorationData) {
 
@@ -80,6 +80,9 @@ oppia.factory('routerService', [
           if (allStates.hasOwnProperty(putativeStateName)) {
             editorContextService.setActiveStateName(putativeStateName);
             $rootScope.$broadcast('refreshStateEditor');
+            // This seems to be needed in order to avoid the graph going off-center if
+            // another tab is loaded first and then the user switches to the editor tab.
+            $rootScope.$broadcast('redrawGraph');
           } else {
             $location.path('/gui/' + explorationInitStateNameService.savedMemento);
           }
@@ -104,6 +107,14 @@ oppia.factory('routerService', [
     }
   };
 
+  var _getCurrentStateFromLocationPath = function() {
+    if ($location.path().indexOf('/gui/') !== -1) {
+      return $location.path().substring('/gui/'.length);
+    } else {
+      return null;
+    }
+  };
+
   var routerService = {
     savePendingChanges: function() {
       _savePendingChanges();
@@ -119,18 +130,34 @@ oppia.factory('routerService', [
         currentPath === '/feedback');
     },
     getCurrentStateFromLocationPath: function() {
-      if ($location.path().indexOf('/gui/') !== -1) {
-        return $location.path().substring('/gui/'.length);
-      } else {
-        return null;
-      }
+      return _getCurrentStateFromLocationPath();
     },
     navigateToMainTab: function(stateName) {
       _savePendingChanges();
-      if (stateName) {
-        editorContextService.setActiveStateName(stateName);
+
+      if (_getCurrentStateFromLocationPath() === stateName) {
+        return;
       }
-      $location.path('/gui/' + editorContextService.getActiveStateName());
+
+      var _actuallyNavigate = function(newStateName) {
+        if (newStateName) {
+          editorContextService.setActiveStateName(newStateName);
+        }
+        $location.path('/gui/' + editorContextService.getActiveStateName());
+        $window.scrollTo(0, 0);
+      };
+
+      if (_tabs.active === MAIN_TAB) {
+        $('.oppia-editor-cards-container').fadeOut(function() {
+          _actuallyNavigate(stateName);
+          $rootScope.$apply();
+          $timeout(function() {
+            $('.oppia-editor-cards-container').fadeIn();
+          }, 150);
+        });
+      } else {
+        _actuallyNavigate(stateName);
+      }
     },
     navigateToPreviewTab: function() {
       _savePendingChanges();

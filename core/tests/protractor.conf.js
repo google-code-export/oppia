@@ -49,7 +49,7 @@ exports.config = {
 
   // The timeout for each script run on the browser. This should be longer
   // than the maximum time your application needs to stabilize between tasks.
-  allScriptsTimeout: 50000,
+  allScriptsTimeout: 30000,
 
   // ----- What tests to run -----
   //
@@ -128,6 +128,10 @@ exports.config = {
         takeScreenShotsOnlyForFailedSpecs: true
       }));
     }
+
+    // Set a wide enough window size for the navbar in the gallery to display
+    // fully.
+    browser.driver.manage().window().setSize(1000, 1200);
   },
 
   // The params object will be passed directly to the protractor instance,

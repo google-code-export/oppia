@@ -116,7 +116,7 @@ describe('Full exploration editor', function() {
     editor.setContent(forms.toRichText('this is state 1'));
     editor.setInteraction('NumericInput');
     editor.addRule('NumericInput', 'Equals', 21);
-    editor.RuleEditor(0).setDestination('state 2');
+    editor.RuleEditor(0).createNewStateAndSetDestination('state 2');
 
     editor.moveToState('state 2');
     editor.setContent(forms.toRichText(
@@ -158,7 +158,7 @@ describe('Full exploration editor', function() {
       // Check discarding of changes
       editor.setStateName('state1');
       editor.expectStateNamesToBe(['state1', 'END']);
-      editor.createState('state2');
+      editor.RuleEditor('default').createNewStateAndSetDestination('state2');
       editor.expectStateNamesToBe(['state1', 'state2', 'END']);
       editor.discardChanges();
       editor.expectCurrentStateToBe(general.FIRST_STATE_DEFAULT_NAME);
@@ -166,11 +166,11 @@ describe('Full exploration editor', function() {
       editor.expectStateNamesToBe(['first', 'END']);
 
       // Check deletion of states and changing the first state
-      editor.createState('second');
+      editor.RuleEditor('default').createNewStateAndSetDestination('second');
+      editor.moveToState('second');
       editor.expectStateNamesToBe(['first', 'second', 'END']);
       editor.expectCurrentStateToBe('second');
-      // TODO (Jacob) remove the '' when issue 443 is fixed
-      editor.expectAvailableFirstStatesToBe(['', 'first', 'second']);
+      editor.expectAvailableFirstStatesToBe(['first', 'second']);
       editor.setFirstState('second');
       editor.moveToState('first');
       editor.deleteState('first');
@@ -412,17 +412,18 @@ describe('Exploration history', function() {
       {'label': 'END', 'color': COLOR_UNCHANGED}
     ], [0, 0, 0]);
 
-    // Check adding state, renaming state, editing text and interactions
-    editor.createState('second');
-    editor.setContent(forms.toRichText('this is state 2'));
-    editor.setInteraction('Continue');
-    editor.RuleEditor('default').setDestination('END');
+    // Check renaming state, editing text, editing interactions and adding state
     editor.moveToState('First State');
     editor.setStateName('first');
     editor.setContent(forms.toRichText('enter 6 to continue'));
     editor.setInteraction('NumericInput');
     editor.addRule('NumericInput', 'Equals', 6);
-    editor.RuleEditor(0).setDestination('second');
+    editor.RuleEditor(0).createNewStateAndSetDestination('second');
+    editor.moveToState('second');
+    editor.setContent(forms.toRichText('this is state 2'));
+    editor.setInteraction('Continue');
+    editor.RuleEditor('default').setDestination('END');
+    editor.moveToState('first');
     editor.saveChanges();
 
     var VERSION_1_STATE_1_CONTENTS = {
@@ -532,6 +533,7 @@ describe('Exploration history', function() {
       .toBe(' ', STATE_2_STRING);
 
     // Check renaming a state
+    editor.moveToState('first');
     editor.setStateName('third');
     editor.saveChanges();
     editor.expectGraphComparisonOf(3, 4).toBe([
@@ -540,12 +542,12 @@ describe('Exploration history', function() {
     ], [1, 0, 0]);
 
     // Check re-inserting a deleted state
-    editor.createState('second');
+    editor.moveToState('third');
+    editor.RuleEditor(0).createNewStateAndSetDestination('second');
+    editor.moveToState('second');
     editor.setContent(forms.toRichText('this is state 2'));
     editor.setInteraction('Continue');
     editor.RuleEditor('default').setDestination('END');
-    editor.moveToState('third');
-    editor.RuleEditor(0).setDestination('second');
     editor.saveChanges();
 
     editor.expectGraphComparisonOf(2, 5).toBe([
