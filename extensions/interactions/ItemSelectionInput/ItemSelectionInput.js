@@ -27,13 +27,16 @@ oppia.directive('oppiaInteractiveItemSelectionInput', [
       scope: {},
       templateUrl: 'interaction/ItemSelectionInput',
       controller: ['$scope', '$attrs', function($scope, $attrs) {
-        $scope.choices = oppiaHtmlEscaper.escapedJsonToObj($attrs.choicesWithValue);
+        $scope.selections = oppiaHtmlEscaper.escapedJsonToObj($attrs.choicesWithValue);
         $scope.answer = null;
 
         $scope.submitAnswer = function(answer) {
           answer = parseInt(answer, 10);
           $scope.$parent.$parent.submitAnswer(answer, 'submit');
         };
+
+        $scope.default = false;
+
       }]
     };
   }
