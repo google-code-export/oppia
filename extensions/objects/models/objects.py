@@ -199,6 +199,40 @@ class CodeEvaluation(BaseObject):
     }
 
 
+class CodeWithTestResults(BaseObject):
+    """Code and test results for it."""
+
+    description = 'Code with results of tests.'
+
+    SCHEMA = {
+        'type': 'dict',
+        'properties': [{
+            'name': 'code',
+            'schema': UnicodeString.SCHEMA,
+        }, {
+            'name': 'testResults',
+            'schema': {
+                'type': 'list',
+                'items': {
+                    'type': 'dict',
+                    'properties': [{
+                        'name': 'label',
+                        'schema': UnicodeString.SCHEMA,
+                    }, {
+                        'name': 'result',
+                        'schema': UnicodeString.SCHEMA,
+                    }, {
+                        # This may be a blank string, meaning no message is
+                        # associated with the result.
+                        'name': 'message',
+                        'schema': UnicodeString.SCHEMA,
+                    }],
+                }
+            }
+        }]
+    }
+
+
 class CoordTwoDim(BaseObject):
     """2D coordinate class."""
 
