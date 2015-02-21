@@ -1,0 +1,41 @@
+<style>
+  .code-repl-input-box {
+    border: 1px solid #ccc;
+  }
+</style>
+
+<script type="text/ng-template" id="interactiveWidget/CodeWithTests">
+  <div>
+    <div>
+      <em>Language: <[language]></em>
+    </div>
+    <br>
+    <div class="code-repl-input-box">
+      <div ui-codemirror="{onLoad: loadCodeEditor}">
+      </div>
+    </div>
+
+    <div ng-if="debugOutput">
+      Debug output:
+      <pre><[debugOutput]></pre>
+    </div>
+
+    <div ng-if="errorMessage" style="color: red;">
+      Error: 
+      <pre><[errorMessage]></pre>
+    </div>
+
+    <button type="submit" ng-click="runCode(code)" class="btn btn-default" ng-disabled="!hasLoaded">Run</button>
+  </div>
+</script>
+
+<script type="text/ng-template" id="response/CodeWithTests">
+  <div>
+    <h5>Code</h5>
+    <pre><[answer.code]></pre>
+
+    <div ng-repeat="testResult in answer.testResults track by $index">
+      <[testResult.label]>: <[testResult.result]>
+    </div>
+  </div>
+</script>

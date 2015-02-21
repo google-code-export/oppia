@@ -169,6 +169,9 @@ ALLOWED_INTERACTIONS = {
     'CodeRepl': {
         'dir': os.path.join(INTERACTIONS_DIR, 'CodeRepl')
     },
+    'CodeWithTests': {
+        'dir': os.path.join(INTERACTIONS_DIR, 'CodeWithTests')
+    },
     'Continue': {
         'dir': os.path.join(INTERACTIONS_DIR, 'Continue')
     },

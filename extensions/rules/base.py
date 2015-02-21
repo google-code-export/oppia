@@ -24,6 +24,10 @@ class CodeEvaluationRule(rule_domain.Rule):
     subject_type = objects.CodeEvaluation
 
 
+class CodeWithTestResultsRule(rule_domain.Rule):
+    subject_type = objects.CodeWithTestResults
+
+
 class CoordTwoDimRule(rule_domain.Rule):
     subject_type = objects.CoordTwoDim
 
