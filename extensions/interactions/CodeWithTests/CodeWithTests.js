@@ -24,7 +24,7 @@ oppia.directive('oppiaInteractiveCodeWithTests', [
     return {
       restrict: 'E',
       scope: {},
-      templateUrl: 'interactiveWidget/CodeWithTests',
+      templateUrl: 'interaction/CodeWithTests',
       controller:  ['$scope', '$attrs', function($scope, $attrs) {
         $scope.language = oppiaHtmlEscaper.escapedJsonToObj($attrs.languageWithValue);
         $scope.placeholder = oppiaHtmlEscaper.escapedJsonToObj($attrs.placeholderWithValue);

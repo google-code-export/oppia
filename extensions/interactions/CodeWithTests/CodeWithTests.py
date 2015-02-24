@@ -20,7 +20,7 @@ from extensions.interactions import base
 class CodeWithTests(base.BaseInteraction):
     """Interactive widget that allows programs to be input."""
 
-    name = 'Code with tests'
+    name = 'Code (learner writes a function)'
     category = 'Programming'
     description = 'Programming code widget with tests.'
     display_mode = base.DISPLAY_MODE_SUPPLEMENTAL
@@ -53,7 +53,7 @@ class CodeWithTests(base.BaseInteraction):
     }, {
         'name': 'tests',
         'description': (
-            'The code snippets postpended to the submission in order to test '
+            'The code snippets appended to the submission in order to test '
             'it'),
         'schema': {
             'type': 'list',
@@ -78,21 +78,21 @@ class CodeWithTests(base.BaseInteraction):
         'default_value': [{
             'label': 'sample',
             'testCode': (
-                '# Each testCode snippet should contain a function run_test()\n'
-                '# which takes no arguments and returns a two-element list.\n'
-                '# The first value in the returned list should be a string\n'
-                '# representing the type of the test result (e.g. \'success\',\n'
-                '# \'failure\', \'missed_base_case\', etc.) and the second value\n'
-                '# should be an optional message meant for display to the\n'
-                '# learner.\n'
+                '# Each testCode snippet should contain a function\n'
+                '# run_test() which takes no arguments and returns a\n'
+                '# two-element list. The first value in the returned list\n'
+                '# should be a string representing the type of the test\n'
+                '# result (e.g. \'success\', \'failure\', \'missed_base\n'
+                '# case\', etc.) and the second value should be an optional\n'
+                '# message meant for display to the learner.\n'
                 '\n'
                 'def run_test():\n'
                 '    test_data = [(5, 6), (-1, 0), (2, 3)]\n'
                 '    for test in test_data:\n'
                 '        if compute_result(test[0]) != test[1]:\n'
-                '            return [\n'
-                '                \'wrong\',\n'
-                '                \'Input data %s gives wrong answer\' % test[0]]\n'
+                '            return [\'wrong\', (\n'
+                '                \'Input data %s gives wrong answer\'\n'
+                '                %% test[0])]\n'
                 '\n'
                 '    return [\'correct\', \'\']\n')
         }]

@@ -23,7 +23,7 @@ from extensions.rules import base
 
 class TestSignatureMatches(base.CodeWithTestResultsRule):
     description = (
-        'has test signatures matching {{x|SetOfUnicodeString}}')
+        'has test signatures matching {{x|ListOfUnicodeString}}')
     is_generic = False
 
     def _evaluate(self, subject):
@@ -49,7 +49,7 @@ class TestSignatureMatches(base.CodeWithTestResultsRule):
 
 class TestSignatureDoesNotMatch(base.CodeWithTestResultsRule):
     description = (
-        'has test signatures that do not match {{x|SetOfUnicodeString}}')
+        'has test signatures that do not match {{x|ListOfUnicodeString}}')
     is_generic = False
 
     def _evaluate(self, subject):

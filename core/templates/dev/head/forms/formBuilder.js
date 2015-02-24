@@ -1393,10 +1393,10 @@ oppia.directive('schemaBasedListEditor', [
           $scope.isAddItemButtonPresent = false;
         };
 
-        
+
         $scope._onChildFormSubmit = function(evt) {
           if (!$scope.isAddItemButtonPresent) {
-            /** 
+            /**
              * If form submission happens on last element of the set (i.e the add item button is absent)
              * then automatically add the element to the list.
              */
@@ -1405,7 +1405,7 @@ oppia.directive('schemaBasedListEditor', [
               $scope.addElement();
             }
           } else {
-            /** 
+            /**
              * If form submission happens on existing element remove focus from it
              */
              document.activeElement.blur();
