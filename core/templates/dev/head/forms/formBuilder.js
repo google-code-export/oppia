@@ -1424,9 +1424,14 @@ oppia.directive('schemaBasedListEditor', [
         if ($scope.len <= 0) {
           throw 'Invalid length for list editor: ' + $scope.len;
         }
-        if ($scope.len != $scope.localValue.length) {
+        if ($scope.len < $scope.localValue.length) {
           throw 'List editor length does not match length of input value: ' +
             $scope.len + ' ' + $scope.localValue;
+        }
+        if ($scope.len > $scope.localValue.length) {
+          while ($scope.localValue.length < $scope.len) {
+            $scope.localValue.push(schemaDefaultValueService.getDefaultValue($scope.itemSchema()));
+          }
         }
       }
     }]

@@ -23,8 +23,17 @@ var OBJECT_EDITOR_TEMPLATES_URL = '/object_editor_template/';
 // Individual object editor directives are in extensions/objects/templates.
 
 oppia.directive('objectEditor', ['$compile', '$log', function($compile, $log) {
+  // TODO(sll): remove schemaDetails. This is a temporary addition for the
+  // CodeWithTests interaction.
   return {
-    scope: {objType: '@', value: '=', initArgs: '=', alwaysEditable: '@', isEditable: '@'},
+    scope: {
+      objType: '@',
+      value: '=',
+      initArgs: '=',
+      alwaysEditable: '@',
+      isEditable: '@',
+      schemaDetails: '&'
+    },
     link: function(scope, element, attrs) {
       // Converts a camel-cased string to a lower-case hyphen-separated string.
       var directiveName = scope.objType.replace(

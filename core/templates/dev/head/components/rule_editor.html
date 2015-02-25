@@ -13,7 +13,7 @@
 
         <span ng-if="rule.description !== 'Default'" style="word-wrap: break-word;">
           <span ng-if="!answerChoices">
-            [<em><[rule | parameterizeRuleDescription: getAnswerChoices()]>...</em>]
+            [<em><[rule | parameterizeRuleDescription: answerChoices]>...</em>]
           </span>
           <span ng-if="answerChoices">
             [<em><span angular-html-bind="rule | parameterizeRuleDescription: answerChoices"></span>...</em>]
@@ -140,10 +140,12 @@
 </script>
 
 <script type="text/ng-template" id="rules/ruleDescriptionEditor">
-  <form class="form-inline" role="form">
+  <form class="form-inline" role="form" ng-if="finishedLoadingRuleDescriptionEditor">
     Answer
     <rule-type-selector class="protractor-test-rule-description" all-rule-types="allRuleTypes" local-value="currentRuleDescription" on-selection-change="onSelectNewRuleType()">
     </rule-type-selector>
+
+    <[currentRuleDefinition]>
 
     <span ng-repeat="item in ruleDescriptionFragments track by $index" class="form-group protractor-test-rule-description-fragment">
       <span ng-if="item.type == 'select'" style="color: black;">
@@ -151,8 +153,12 @@
         </select>
       </span>
 
-      <span ng-if="item.type != 'select' && item.type != 'noneditable'">
+      <span ng-if="item.type != 'select' && item.type != 'noneditable' && !item.schemaDetails">
         <object-editor obj-type="<[item.type]>" is-editable="isEditable" always-editable="true" value="currentRuleDefinition.inputs[item.varName]" style="color: black;"></object-editor>
+      </span>
+
+      <span ng-if="item.type != 'select' && item.type != 'noneditable' && item.schemaDetails">
+        <object-editor obj-type="<[item.type]>" is-editable="isEditable" always-editable="true" value="currentRuleDefinition.inputs[item.varName]" style="color: black;" schema-details="item.schemaDetails"></object-editor>
       </span>
       <span ng-if="item.type == 'noneditable'">
         <[item.text]>

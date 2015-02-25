@@ -88,18 +88,18 @@ oppia.filter('truncateAtFirstInput', [function() {
 
 // Filter that changes {{...}} tags into the corresponding parameter input values.
 // Note that this returns an HTML string to accommodate the case of multiple-choice
-// input and image-click input.
+// input.
 oppia.filter('parameterizeRuleDescription', ['$filter', function($filter) {
-  return function(input, choices) {
-    if (!input || !(input.description)) {
+  return function(rule, choices) {
+    if (!rule || !(rule.description)) {
       return '';
     }
-    var description = input.description;
+    var description = rule.description;
     if (description == 'Default') {
       return description;
     }
     // TODO(sll): Generalize this to allow Boolean combinations of rules.
-    var inputs = input.definition.inputs;
+    var inputs = rule.definition.inputs;
 
     var finalRule = description;
 
@@ -118,8 +118,8 @@ oppia.filter('parameterizeRuleDescription', ['$filter', function($filter) {
       }
 
       var replacementText;
-      // Special case for MultipleChoiceInput and ImageClickInput
-      if (choices) {
+      // Special case for MultipleChoiceInput
+      if (varType === 'NonnegativeInt' && choices) {
         for (var i = 0; i < choices.length; i++) {
           if (choices[i].val === inputs[varName]) {
             replacementText = '\'' + choices[i].label + '\'';
@@ -134,6 +134,15 @@ oppia.filter('parameterizeRuleDescription', ['$filter', function($filter) {
             replacementText += ', ';
           }
           replacementText += inputs[varName][i].readableNoteName;
+        }
+        replacementText += ']';
+      } else if (varType === 'ListOfUnicodeString') {
+        replacementText = '[';
+        for (var i = 0; i < inputs[varName].length; i++) {
+          if (i !== 0) {
+            replacementText += ', ';
+          }
+          replacementText += inputs[varName][i];
         }
         replacementText += ']';
       } else if (varType === 'NormalizedString') {

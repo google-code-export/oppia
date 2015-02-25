@@ -246,14 +246,6 @@ oppia.controller('StateRules', [
     $scope.activeRuleIndex = rulesService.getActiveRuleIndex();
   });
 
-  // Updates answer choices when the interaction requires it -- for example,
-  // the rules for multiple choice need to refer to the multiple choice
-  // interaction's customization arguments.
-  // TODO(sll): Remove the need for this watcher, or make it less ad hoc.
-  $scope.$on('updateAnswerChoices', function(evt, newAnswerChoices) {
-    rulesService.updateAnswerChoices(newAnswerChoices);
-  });
-
   $scope.openAddRuleModal = function() {
     warningsData.clear();
     $rootScope.$broadcast('externalSave');

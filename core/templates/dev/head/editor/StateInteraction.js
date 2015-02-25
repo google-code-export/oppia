@@ -51,12 +51,12 @@ oppia.controller('StateInteraction', [
     'editorContextService', 'oppiaHtmlEscaper', 'INTERACTION_SPECS',
     'stateInteractionIdService', 'stateCustomizationArgsService',
     'editabilityService', 'explorationStatesService', 'graphDataService',
-    'interactionDetailsCache',
+    'interactionDetailsCache', 'rulesService',
     function($scope, $http, $rootScope, $modal, $filter, warningsData,
       editorContextService, oppiaHtmlEscaper, INTERACTION_SPECS,
       stateInteractionIdService, stateCustomizationArgsService,
       editabilityService, explorationStatesService, graphDataService,
-      interactionDetailsCache) {
+      interactionDetailsCache, rulesService) {
 
   // Declare dummy submitAnswer() and adjustPageHeight() methods for the
   // interaction preview.
@@ -204,30 +204,45 @@ oppia.controller('StateInteraction', [
     var currentCustomizationArgs = stateCustomizationArgsService.savedMemento;
     $scope.interactionPreviewHtml = _getInteractionPreviewTag(currentCustomizationArgs);
 
-    // Special cases for multiple choice input and image click input.
-    if ($scope.interactionId === 'MultipleChoiceInput') {
-      $rootScope.$broadcast(
-        'updateAnswerChoices', currentCustomizationArgs['choices'].value.map(function(val, ind) {
-          return {
-            val: ind,
-            label: val
-          };
-        })
-      );
-    } else if ($scope.interactionId === 'ImageClickInput') {
-      var _answerChoices = [];
-      var imageWithRegions = currentCustomizationArgs['imageAndRegions'].value;
-      for (var j = 0; j < imageWithRegions.labeledRegions.length; j++) {
-        _answerChoices.push({
-          val: imageWithRegions.labeledRegions[j].label,
-          label: imageWithRegions.labeledRegions[j].label
-        });
-      }
+    var _newAnswerChoices = null;
 
-      $rootScope.$broadcast('updateAnswerChoices', _answerChoices);
-    } else {
-      $rootScope.$broadcast('updateAnswerChoices', null);
+    // Special cases for interactions whose rules need data from the
+    // interaction in order to generate their form fields.
+    if ($scope.interactionId === 'MultipleChoiceInput') {
+      _newAnswerChoices = currentCustomizationArgs['choices'].value.map(function(val, ind) {
+        return {
+          val: ind,
+          label: val
+        };
+      });
+    } else if ($scope.interactionId === 'ImageClickInput') {
+      _newAnswerChoices = currentCustomizationArgs['imageAndRegions'].value.labeledRegions.map(function(val, ind) {
+        return {
+          val: val.label,
+          label: val.label
+        };
+      });
+    } else if ($scope.interactionId === 'CodeWithTests') {
+      var tests = currentCustomizationArgs['tests'].value;
+
+      // Note that this is eventually used as part of a schema-based list.
+      // It has two keys:
+      // - choices: a list of strings
+      // - len: the desired length of the list.
+      _newAnswerChoices = {
+        len: tests.length,
+        choices: []
+      };
+
+      for (var i = 0; i < tests.length; i++) {
+        if (_newAnswerChoices.choices.indexOf(tests[i].label) === -1) {
+          _newAnswerChoices.choices.push(tests[i].label);
+        }
+      }
     }
+
+    rulesService.updateAnswerChoices(_newAnswerChoices);
+    $rootScope.$broadcast('onAnswerChoicesChanged');
   };
 
   var _updateStatesDict = function() {

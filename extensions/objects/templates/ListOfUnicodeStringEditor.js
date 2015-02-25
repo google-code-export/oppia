@@ -36,6 +36,13 @@ oppia.directive('listOfUnicodeStringEditor', function($compile, warningsData) {
         }
       };
 
+      if ($scope.$parent.schemaDetails) {
+        $scope.SCHEMA.items.choices = $scope.$parent.schemaDetails().choices;
+        $scope.SCHEMA.len = $scope.$parent.schemaDetails().len;
+      }
+
+      console.log($scope.SCHEMA);
+
       if (!$scope.$parent.value) {
         $scope.$parent.value = [];
       }

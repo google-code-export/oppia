@@ -102,9 +102,9 @@ oppia.directive('ruleEditor', ['$log', function($log) {
           }
         };
 
-        $scope.getAnswerChoices = function() {
-          return rulesService.getAnswerChoices();
-        };
+        $scope.$on('onAnswerChoicesChanged', function() {
+          $scope.answerChoices = rulesService.getAnswerChoices();
+        });
 
         $scope.ruleDestMemento = null;
         $scope.ruleDescriptionMemento = null;
@@ -303,9 +303,10 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
     },
     templateUrl: 'rules/ruleDescriptionEditor',
     controller: [
-        '$scope', 'editorContextService', 'explorationStatesService', 'routerService', 'validatorsService',
-        'rulesService',
-        function($scope, editorContextService, explorationStatesService, routerService, validatorsService, rulesService) {
+        '$scope', '$timeout', 'editorContextService', 'explorationStatesService', 'routerService', 'validatorsService',
+        'rulesService', 'stateInteractionIdService',
+        function($scope, $timeout, editorContextService, explorationStatesService, routerService, validatorsService, rulesService,
+                 stateInteractionIdService) {
       var _generateAllRuleTypes = function() {
         var _interactionHandlerSpecs = rulesService.getInteractionHandlerSpecs();
         for (var i = 0; i < _interactionHandlerSpecs.length; i++) {
@@ -324,6 +325,8 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
           $scope.ruleDescriptionFragments = [];
           return;
         }
+
+        var currentInteractionId = stateInteractionIdService.savedMemento;
 
         var pattern = /\{\{\s*(\w+)\s*\|\s*(\w+)\s*\}\}/;
 
@@ -345,7 +348,8 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
 
           var _answerChoices = rulesService.getAnswerChoices();
 
-          if (_answerChoices && _answerChoices.length) {
+          if (_answerChoices && _answerChoices.length && (
+                currentInteractionId === 'MultipleChoiceInput' || currentInteractionId === 'ImageClickInput')) {
             // This rule is for a multiple-choice interaction.
             // TODO(sll): Remove the need for this special case for multiple-choice
             // input.
@@ -357,6 +361,14 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
             });
 
             result.push({'type': 'select', 'varName': finalInputArray[i+1]});
+          } else if (
+              currentInteractionId === 'CodeWithTests' &&
+              finalInputArray[i+2] === 'ListOfUnicodeString') {
+            result.push({
+              'type': finalInputArray[i+2],
+              'varName': finalInputArray[i+1],
+              'schemaDetails': _answerChoices
+            });
           } else {
             result.push({
               'type': finalInputArray[i+2],
@@ -368,6 +380,8 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
       };
 
       $scope.onSelectNewRuleType = function() {
+        $scope.finishedLoadingRuleDescriptionEditor = false;
+
         $scope.currentRuleDefinition.name = $scope.allRuleTypes[$scope.currentRuleDescription];
         $scope.currentRuleDefinition.inputs = {};
         _computeRuleDescriptionFragments();
@@ -404,6 +418,10 @@ oppia.directive('ruleDescriptionEditor', ['$log', function($log) {
 
           copyOfRule = copyOfRule.replace(pattern, ' ');
         }
+
+        $timeout(function() {
+          $scope.finishedLoadingRuleDescriptionEditor = true;
+        }, 5);
       };
 
       _generateAllRuleTypes();
