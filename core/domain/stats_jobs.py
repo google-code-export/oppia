@@ -152,6 +152,8 @@ class StatisticsMRJobManager(
     """Job that calculates and creates stats models for exploration view.
        Includes: * number of visits to the exploration
                  * number of completions of the exploration
+       This deals with statistics of the whole exploration. See 
+       stats_domain.StateAnswers for statistics of individual states.
     """
 
     _TYPE_STATE_COUNTER_STRING = 'counter'
@@ -320,3 +322,41 @@ class StatisticsMRJobManager(
         stats_models.ExplorationAnnotationsModel.create(
             exp_id, str(version), num_starts, num_completions,
             state_hit_counts)
+
+
+class InteractionAnswerViewsMRJobManager(
+        jobs.BaseMapReduceJobManagerForContinuousComputations):
+    """Job that calculates and creates models for interaction answer views.
+       Includes: * answer counts for all answers
+                 * some sample answers
+    """
+    @classmethod
+    def _get_continuous_computation_class(cls):
+        return InteractionAnswerViewsAggregator
+
+    @classmethod
+    def entity_classes_to_map_over(cls):
+        return [stats_models.StateAnswersModel]
+
+    @staticmethod
+    def map(item):
+        if InteractionAnswerViewsMRJobManager._entity_created_before_job_queued(item):
+            yield (item.id, item)
+
+    @staticmethod
+    def reduce(id, state_answers):
+        state_answers_calc_output_model = None
+        # TODO(msl): write this        
+
+
+class InteractionAnswerViewsAggregator(jobs.BaseContinuousComputationManager):
+    """A continuous-computation job that listens to answers to states and updates
+    StateAnswer view calculations.
+    """
+    @classmethod
+    def get_event_types_listened_to(cls):
+        return [
+            feconf.EVENT_TYPE_ANSWER_SUBMITTED]
+
+    # TODO(msl): continue writing this
+

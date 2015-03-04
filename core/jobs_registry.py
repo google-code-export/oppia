@@ -38,6 +38,7 @@ ONE_OFF_JOB_MANAGERS = [
 ALL_CONTINUOUS_COMPUTATION_MANAGERS = [
     exp_jobs.SearchRanker,
     stats_jobs.StatisticsAggregator,
+    stats_jobs.InteractionAnswerViewsAggregator,
     user_jobs.DashboardRecentUpdatesAggregator]
 
 
