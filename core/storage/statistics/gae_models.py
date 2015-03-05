@@ -458,27 +458,36 @@ class StateAnswersModel(base_models.BaseModel):
     answers_list = ndb.JsonProperty(repeated=True, indexed=False)
     
     @classmethod
-    def get_or_create(cls, exploration_id, exploration_version, state_name):
-        instance_id = ':'.join([exploration_id, 
-                                str(exploration_version),
-                                state_name])
-        instance = cls.get(instance_id, strict=False)
-        if not instance:
-            instance = cls(id=instance_id, exploration_id=exploration_id,
-                           exploration_version=exploration_version,
-                           state_name=state_name,
-                           answers_list=[])
+    def get_model(cls, exploration_id, exploration_version, state_name):
+        entity_id = cls.get_entity_id(
+            exploration_id, str(exploration_version), state_name)
+        instance = cls.get(entity_id, strict=False)
         return instance
+
+    @classmethod
+    def create_or_update(cls, exploration_id, exploration_version, state_name,
+                         answers_list):
+        entity_id = cls.get_entity_id(
+            exploration_id, str(exploration_version), state_name)
+        instance = cls(id=entity_id, exploration_id=exploration_id,
+                       exploration_version=exploration_version,
+                       state_name=state_name,
+                       answers_list=answers_list)
+        return instance
+
+    @classmethod
+    def get_entity_id(cls, exploration_id, exploration_version, state_name):
+        return ':'.join([exploration_id, 
+                         str(exploration_version),
+                         state_name])
 
     def get_exploration_id_and_version_and_state_name(self):
         return self.exploration_id, self.exploration_version, self.state_name
 
-    def record_answer(self, answer):
-        self.answers_list.append(answer)
+    def save(self):
         # This may fail if answers_list is too large.
         try:
             self.put()
-            print "STORED answer: %s" % answer
         except Exception as e:
             logging.error(e)
             pass

@@ -93,7 +93,7 @@ class StateAnswers(object):
     """Domain object that stores answers of states."""
 
     def __init__(self, exploration_id, exploration_version, state_name,
-                 answers_list=[]):
+                 answers_list):
         """
         Initialize domain object for state answers.
         
@@ -101,49 +101,45 @@ class StateAnswers(object):
         contains information about an answer, e.g. answer_string, session_id,
         time_taken_to_answer.
         """
+        # TODO(msl): Store interaction type of this state, e.g. multiple choice
         self.exploration_id = exploration_id
         self.exploration_version = exploration_version
         self.state_name = state_name
+        for answer in answers_list:
+            StateAnswers.validate_answer(answer)
         self.answers_list = copy.deepcopy(answers_list)
         self.validate()
 
-    @classmethod
     def record_answer(self, exploration_id, exploration_version, state_name,
                       answer):
+        StateAnswers.validate_answer(answer)
+        self.answers_list.append(answer)
 
-        state_answers_model = stats_models.StateAnswersModel.get_or_create(
-            exploration_id, exploration_version, state_name)
-        state_answers_model.record_answer(answer)
-
-    @classmethod
-    def add_or_create_multi(cls, exploration_id, exploration_version,
-                            state_name, answers_list):
+    def record_answers(self, exploration_id, exploration_version,
+                       state_name, answers_list):
         for answer in answers_list:
-            cls.record_answer(
+            self.record_answer(
                 exploration_id, exploration_version, state_name, answer)
 
+    def save(self):
+        state_answers_model = stats_models.StateAnswersModel.create_or_update(
+            self.exploration_id, self.exploration_version, self.state_name,
+            self.answers_list)
+        state_answers_model.save()
+            
     @classmethod
     def get(cls, exploration_id, exploration_version, state_name):
         """
         Get state answers domain object (this is obtained from 
         state_answers_model instance stored in data store).
         """
-        state_answers_model = stats_models.StateAnswersModel.get_or_create(
+        state_answers_model = stats_models.StateAnswersModel.get_model(
             exploration_id, exploration_version, state_name)
         return cls(exploration_id, exploration_version, state_name,
                    answers_list=state_answers_model.answers_list)
-            
-    def validate(self):
-        """Validates StateAnswers domain object entity.
-        TODO(msl): validation should be done before committing to storage.
 
-        In particular, check structure of answer dicts in answers_list:
-           - Minimum set of keys: 'answer_string', 'time_taken_to_answer',
-             'session_id'
-           - Check length of every answer_string
-           - Check time_taken_to_answer is positive
-        """
-
+    @classmethod
+    def validate_answer(cls, answer_dict):
         # Minimum set of keys required for answer_dicts in answers_list
         REQUIRED_ANSWER_DICT_KEYS = ['answer_string', 'time_taken_to_answer',
                                      'session_id']
@@ -155,6 +151,57 @@ class StateAnswers(object):
         # an answer exceeds the maximum size.
         MAX_BYTES_PER_ANSWER_STRING = 500
         
+        # check type is dict
+        if not isinstance(answer_dict, dict):
+            raise utils.ValidationError(
+                'Expected answer_dict to be a dict, received %s' %
+                answer_dict)
+
+        # check keys
+        required_keys = set(REQUIRED_ANSWER_DICT_KEYS)
+        actual_keys = set(answer_dict.keys())
+        if not required_keys.issubset(actual_keys):
+            # find missing keys
+            missing_keys = required_keys.difference(actual_keys)
+            raise utils.ValidationError(
+                ('answer_dict misses required keys %s' % missing_keys))
+
+        # check values of answer_dict
+        if not isinstance(answer_dict['answer_string'], basestring):
+            raise utils.ValidationError(
+                'Expected answer_string to be a string, received %s' %
+                answer_dict['answer_string'])
+
+        if not (sys.getsizeof(answer_dict['answer_string']) <= 
+                MAX_BYTES_PER_ANSWER_STRING):
+            # TODO(msl): find a better way to deal with long answers,
+            # e.g. just skip. At the moment, too long answers produce
+            # a ValidationError.
+            raise utils.ValidationError(
+                'answer_string is too big to be stored: %s' %
+                answer_dict['answer_string'])
+
+        if not isinstance(answer_dict['session_id'], basestring):
+            raise utils.ValidationError(
+                'Expected session_id to be a string, received %s' %
+                answer_dict['session_id'])
+
+        if not isinstance(answer_dict['time_taken_to_answer'], float):
+            raise utils.ValidationError(
+                'Expected time_taken_to_answer to be a float, received %s' %
+                answer_dict['time_taken_to_answer'])
+    
+    def validate(self):
+        """Validates StateAnswers domain object entity.
+        TODO(msl): validation should be done before committing to storage.
+
+        In particular, check structure of answer dicts in answers_list:
+           - Minimum set of keys: 'answer_string', 'time_taken_to_answer',
+             'session_id'
+           - Check length of every answer_string
+           - Check time_taken_to_answer is positive
+        """
+
         if not isinstance(self.exploration_id, basestring):
             raise utils.ValidationError(
                 'Expected exploration_id to be a string, received %s' %
@@ -170,47 +217,10 @@ class StateAnswers(object):
                 'Expected answers_list to be a list, received %s' %
                 self.answers_list)
 
-        # check every answers_dict in answers_list
-        for answer_dict in self.answers_list:
-            # check type is dict
-            if not isinstance(answer_dict, dict):
-                raise utils.ValidationError(
-                    'Expected answer_dict to be a dict, received %s' %
-                    answer_dict)
-
-            # check keys
-            required_keys = set(REQUIRED_ANSWER_DICT_KEYS)
-            actual_keys = set(answer_dict.keys())
-            if not required_keys.issubset(actual_keys):
-                # find missing keys
-                missing_keys = required_keys.difference(actual_keys)
-                raise utils.ValidationError(
-                    ('answer_dict misses required keys %s' % missing_keys))
-
-            # check values of answer_dict
-            if not isinstance(answer_dict['answer_string'], basestring):
-                raise utils.ValidationError(
-                    'Expected answer_string to be a string, received %s' %
-                    answer_dict['answer_string'])
-
-            if not (sys.getsizeof(answer_dict['answer_string']) <= 
-                    MAX_BYTES_PER_ANSWER_STRING):
-                # TODO(msl): find a better way to deal with long answers,
-                # e.g. just skip. At the moment, too long answers produce
-                # a ValidationError.
-                raise utils.ValidationError(
-                    'answer_string is too big to be stored: %s' %
-                    answer_dict['answer_string'])
-
-            if not isinstance(answer_dict['session_id'], basestring):
-                raise utils.ValidationError(
-                    'Expected session_id to be a string, received %s' %
-                    answer_dict['session_id'])
-
-            if not isinstance(answer_dict['time_taken_to_answer'], float):
-                raise utils.ValidationError(
-                    'Expected time_taken_to_answer to be a float, received %s' %
-                    answer_dict['time_taken_to_answer'])
+        # Note: There is no need to validate content of answers_list here
+        # because each answer is validated before it is appended to 
+        # answers_list (which is faster than validating whole answers_list
+        # each time a new answer is recorded).
 
 
 class StateAnswersCalcOutput(object):
