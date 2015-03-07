@@ -23,8 +23,8 @@ import utils
 
 # Valid model names.
 NAMES = utils.create_enum(
-    'base_model', 'config', 'exploration', 'file', 'job', 'statistics', 'user',
-    'feedback')
+    'base_model', 'config', 'exploration', 'feedback', 'file', 'job',
+    'notification', 'statistics', 'user')
 
 
 class _Platform(object):
@@ -48,21 +48,24 @@ class _Gae(_Platform):
             elif name == NAMES.exploration:
                 from core.storage.exploration import gae_models as exp_model
                 returned_models.append(exp_model)
+            elif name == NAMES.feedback:
+                from core.storage.feedback import gae_models as feedback_model
+                returned_models.append(feedback_model)
             elif name == NAMES.file:
                 from core.storage.file import gae_models as file_model
                 returned_models.append(file_model)
             elif name == NAMES.job:
                 from core.storage.job import gae_models as job_model
                 returned_models.append(job_model)
+            elif name == NAMES.notification:
+                from core.storage.notification import gae_models as notification_model
+                returned_models.append(notification_model)
             elif name == NAMES.statistics:
                 from core.storage.statistics import gae_models as statistics_model
                 returned_models.append(statistics_model)
             elif name == NAMES.user:
                 from core.storage.user import gae_models as user_model
                 returned_models.append(user_model)
-            elif name == NAMES.feedback:
-                from core.storage.feedback import gae_models as feedback_model
-                returned_models.append(feedback_model)
             else:
                 raise Exception('Invalid model name: %s' % name)
 
