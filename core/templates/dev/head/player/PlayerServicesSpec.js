@@ -133,3 +133,31 @@ describe('Learner parameters service', function() {
     });
   });
 });
+
+
+describe('Ratings from frequencies directive', function() {
+  var elt, scope, $httpBackend, ctrlScope;
+
+  beforeEach(module('oppia'));
+  beforeEach(module('directiveTemplates'));
+  beforeEach(inject(function($rootScope, $compile, _$httpBackend_, _$templateCache_) {
+    $httpBackend = _$httpBackend_;
+
+    $templateCache = _$templateCache_;
+    var templatesHtml = $templateCache.get('core/templates/dev/head/components/ratings.html');
+    $compile(templatesHtml)($rootScope);
+    $rootScope.$digest();
+
+    scope = $rootScope.$new();
+    elt = angular.element('<rating-from-frequencies></rating-from-frequencies>');
+    var compiledElem = $compile(elt)(scope);
+    scope.$digest();
+    ctrlScope = elt.isolateScope();
+  }));
+
+  it('should compute average ratings correctly', function() {
+    expect(
+      ctrlScope.computeAverageRating({'1': 0, '2': 0, '3': 0, '4': 0, '5': 0})
+    ).toBe(undefined);
+  })
+});
