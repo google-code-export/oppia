@@ -31,7 +31,9 @@ import urllib
 from core import counters
 from core.domain import config_domain
 from core.domain import config_services
+from core.domain import obj_services
 from core.domain import rights_manager
+from core.domain import rte_component_registry
 from core.domain import user_services
 from core.platform import models
 current_user_services = models.Registry.import_current_user_services()
@@ -48,16 +50,45 @@ from google.appengine.api import users
 
 DEFAULT_CSRF_SECRET = 'oppia csrf secret'
 CSRF_SECRET = config_domain.ConfigProperty(
-    'oppia_csrf_secret', 'UnicodeString', 'Text used to encrypt CSRF tokens.',
-    DEFAULT_CSRF_SECRET)
-FULL_SITE_URL = config_domain.ConfigProperty(
-    'full_site_url', 'UnicodeString',
-    'The full site URL, without a trailing slash',
-    default_value='https://FULL.SITE/URL')
+    'oppia_csrf_secret', {'type': 'unicode'},
+    'Text used to encrypt CSRF tokens.', DEFAULT_CSRF_SECRET)
 
 BEFORE_END_HEAD_TAG_HOOK = config_domain.ConfigProperty(
-    'before_end_head_tag_hook', 'UnicodeString',
+    'before_end_head_tag_hook', {'type': 'unicode'},
     'Code to insert just before the closing </head> tag in all pages.', '')
+
+OBJECT_EDITORS_JS = config_domain.ComputedProperty(
+    'object_editors_js', {'type': 'unicode'},
+    'JavaScript code for the object editors',
+    obj_services.get_all_object_editor_js_templates)
+
+SIDEBAR_MENU_ADDITIONAL_LINKS = config_domain.ConfigProperty(
+    'sidebar_menu_additional_links', {
+        'type': 'list',
+        'items': {
+            'type': 'dict',
+            'properties': [{
+                'name': 'name',
+                'description': 'Text of the menu item',
+                'schema': {'type': 'unicode'},
+            }, {
+                'name': 'link',
+                'description': 'The link to open in a new tab',
+                'schema': {'type': 'unicode'},
+            }, {
+                'name': 'icon_filename',
+                'description': (
+                    'Filename of the menu icon (in /images/sidebar)'),
+                'schema': {'type': 'unicode'},
+            }]
+        }
+    },
+    'Additional links to show in the sidebar menu.',
+    default_value=[{
+        'name': 'Site Feedback',
+        'link': 'http://site/feedback/url',
+        'icon_filename': 'comment.png',
+    }])
 
 
 def require_user(handler):
@@ -129,7 +160,10 @@ class LogoutPage(webapp2.RequestHandler):
         """Logs the user out, and returns them to a specified page or the home
         page.
         """
-        url_to_redirect_to = self.request.get('return_url') or '/'
+        # The str conversion is needed, otherwise an InvalidResponseError
+        # asking for the 'Location' header value to be str instead of
+        # 'unicode' will result.
+        url_to_redirect_to = str(self.request.get('return_url') or '/')
         _clear_login_cookies(self.response.headers)
 
         if feconf.DEV_MODE:
@@ -295,6 +329,8 @@ class BaseHandler(webapp2.RequestHandler):
             values = self.values
 
         values.update({
+            'RTE_COMPONENT_SPECS': (
+                rte_component_registry.Registry.get_all_specs()),
             'DEV_MODE': feconf.DEV_MODE,
             'INVALID_NAME_CHARS': feconf.INVALID_NAME_CHARS,
             'EXPLORATION_STATUS_PRIVATE': (
@@ -305,11 +341,15 @@ class BaseHandler(webapp2.RequestHandler):
                 rights_manager.EXPLORATION_STATUS_PUBLICIZED),
             'BEFORE_END_HEAD_TAG_HOOK': jinja2.utils.Markup(
                 BEFORE_END_HEAD_TAG_HOOK.value),
-            'FULL_SITE_URL': FULL_SITE_URL.value,
             'SHOW_FORUM_PAGE': feconf.SHOW_FORUM_PAGE,
             'ALL_LANGUAGE_CODES': feconf.ALL_LANGUAGE_CODES,
             'DEFAULT_LANGUAGE_CODE': feconf.ALL_LANGUAGE_CODES[0]['code'],
             'user_is_logged_in': bool(self.username),
+            # TODO(sll): Consider including the obj_editor html directly as
+            # part of the base HTML template?
+            'OBJECT_EDITORS_JS': jinja2.utils.Markup(OBJECT_EDITORS_JS.value),
+            'SIDEBAR_MENU_ADDITIONAL_LINKS': (
+                SIDEBAR_MENU_ADDITIONAL_LINKS.value),
         })
 
         if redirect_url_on_logout is None:

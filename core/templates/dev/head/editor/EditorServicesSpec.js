@@ -329,6 +329,8 @@ describe('New state template service', function() {
     var NEW_STATE_NAME = 'new state name';
 
     beforeEach(inject(function($injector) {
+      // TODO(sll): Make this match the dict in the backend so that there
+      // is a single source of truth.
       GLOBALS = {
         NEW_STATE_TEMPLATE: {
           content: [{type: 'text', value: ''}],
@@ -343,12 +345,10 @@ describe('New state template service', function() {
                 dest: '(untitled state)',
                 definition: {rule_type: 'default'},
                 feedback: [],
-                param_changes: [],
-                description: 'Default',
+                param_changes: []
               }],
             }],
-            id: 'TextInput',
-            sticky: false
+            id: 'TextInput'
           },
           param_changes: [],
           unresolved_answers: {},
@@ -371,12 +371,10 @@ describe('New state template service', function() {
               dest: NEW_STATE_NAME,
               definition: {rule_type: 'default'},
               feedback: [],
-              param_changes: [],
-              description: 'Default'
+              param_changes: []
             }]
           }],
-          id: 'TextInput',
-          sticky: false
+          id: 'TextInput'
         },
         param_changes: [],
         unresolved_answers: {}

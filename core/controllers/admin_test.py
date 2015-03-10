@@ -23,7 +23,7 @@ from core.tests import test_utils
 import feconf
 
 
-SITE_NAME = 'sitename.org'
+SITE_FORUM_URL = 'siteforum.url'
 
 
 class AdminIntegrationTest(test_utils.GenericTestBase):
@@ -44,7 +44,7 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
             'Total processing time for all JSON responses',
             'Configuration',
             'Reload a single exploration',
-            'counting.yaml')
+            'three_balls')
 
         self.logout()
 
@@ -69,7 +69,7 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
     def test_change_configuration_property(self):
         """Test that configuration properties can be changed."""
 
-        ANNOUNCEMENT_TEXT = self.UNICODE_TEST_STRING
+        TEST_STRING = self.UNICODE_TEST_STRING
 
         self.login(self.ADMIN_EMAIL, is_super_admin=True)
         response = self.testapp.get('/admin')
@@ -78,13 +78,13 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
         response_dict = self.get_json('/adminhandler')
         response_config_properties = response_dict['config_properties']
         self.assertDictContainsSubset({
-            'value': ''
-        }, response_config_properties[editor.EDITOR_PAGE_ANNOUNCEMENT.name])
+            'value': editor.MODERATOR_REQUEST_FORUM_URL_DEFAULT_VALUE,
+        }, response_config_properties[editor.MODERATOR_REQUEST_FORUM_URL.name])
 
         payload = {
             'action': 'save_config_properties',
             'new_config_property_values': {
-                editor.EDITOR_PAGE_ANNOUNCEMENT.name: ANNOUNCEMENT_TEXT
+                editor.MODERATOR_REQUEST_FORUM_URL.name: TEST_STRING
             }
         }
         self.post_json('/adminhandler', payload, csrf_token)
@@ -92,8 +92,8 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
         response_dict = self.get_json('/adminhandler')
         response_config_properties = response_dict['config_properties']
         self.assertDictContainsSubset({
-            'value': ANNOUNCEMENT_TEXT
-        }, response_config_properties[editor.EDITOR_PAGE_ANNOUNCEMENT.name])
+            'value': TEST_STRING
+        }, response_config_properties[editor.MODERATOR_REQUEST_FORUM_URL.name])
 
         self.logout()
 
@@ -101,8 +101,8 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
         """Test that the correct variables show up on the about page."""
         # Navigate to the about page. The site name is not set.
         response = self.testapp.get('/about')
-        self.assertIn('SITE_NAME', response.body)
-        self.assertNotIn(SITE_NAME, response.body)
+        self.assertIn('https://site/forum/url', response.body)
+        self.assertNotIn(SITE_FORUM_URL, response.body)
 
         self.login(self.ADMIN_EMAIL, is_super_admin=True)
         response = self.testapp.get('/admin')
@@ -110,15 +110,15 @@ class AdminIntegrationTest(test_utils.GenericTestBase):
         self.post_json('/adminhandler', {
             'action': 'save_config_properties',
             'new_config_property_values': {
-                pages.SITE_NAME.name: SITE_NAME
+                pages.SITE_FORUM_URL.name: SITE_FORUM_URL
             }
         }, csrf_token)
         self.logout()
 
         # Navigate to the splash page. The site name is set.
         response = self.testapp.get('/about')
-        self.assertNotIn('SITE_NAME', response.body)
-        self.assertIn(SITE_NAME, response.body)
+        self.assertNotIn('https://site/forum/url', response.body)
+        self.assertIn(SITE_FORUM_URL, response.body)
 
     def test_change_rights(self):
         """Test that the correct role indicators show up on app pages."""

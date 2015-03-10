@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Controllers for simple, mostly-static pages (like About, Contact, etc.)."""
+"""Controllers for simple, mostly-static pages (like About, Forum, etc.)."""
 
 __author__ = 'sll@google.com (Sean Lip)'
 
@@ -27,19 +27,40 @@ import feconf
 
 
 ADMIN_EMAIL_ADDRESS = config_domain.ConfigProperty(
-    'admin_email_address', 'UnicodeString',
+    'admin_email_address', {'type': 'unicode'},
     'The admin email address to display on the About pages',
     default_value='ADMIN_EMAIL_ADDRESS')
 SITE_FORUM_URL = config_domain.ConfigProperty(
-    'site_forum_url', 'UnicodeString',
+    'site_forum_url', {'type': 'unicode'},
     'The site forum URL (for links; the Forum page is configured separately)',
     default_value='https://site/forum/url')
 SITE_NAME = config_domain.ConfigProperty(
-    'site_name', 'UnicodeString', 'The site name', default_value='SITE_NAME')
+    'site_name', {'type': 'unicode'}, 'The site name',
+    default_value='SITE_NAME')
+
+# The id of the exploration for the About page.
+_ABOUT_EXPLORATION_ID = '14'
 
 
 class AboutPage(base.BaseHandler):
     """Page with information about Oppia."""
+
+    def get(self):
+        """Handles GET requests."""
+        self.values.update({
+            'ABOUT_EXPLORATION_ID': _ABOUT_EXPLORATION_ID,
+            'ADMIN_EMAIL_ADDRESS': ADMIN_EMAIL_ADDRESS.value,
+            'MODERATOR_REQUEST_FORUM_URL': (
+                editor.MODERATOR_REQUEST_FORUM_URL.value),
+            'SITE_FORUM_URL': SITE_FORUM_URL.value,
+            'SITE_NAME': SITE_NAME.value,
+            'nav_mode': feconf.NAV_MODE_ABOUT,
+        })
+        self.render_template('pages/about.html')
+
+
+class ParticipatePage(base.BaseHandler):
+    """Page with information about participating in Oppia."""
 
     def get(self):
         """Handles GET requests."""
@@ -49,9 +70,9 @@ class AboutPage(base.BaseHandler):
                 editor.MODERATOR_REQUEST_FORUM_URL.value),
             'SITE_FORUM_URL': SITE_FORUM_URL.value,
             'SITE_NAME': SITE_NAME.value,
-            'nav_mode': feconf.NAV_MODE_ABOUT,
+            'nav_mode': feconf.NAV_MODE_PARTICIPATE,
         })
-        self.render_template('pages/about.html')
+        self.render_template('pages/participate.html')
 
 
 class ForumPage(base.BaseHandler):

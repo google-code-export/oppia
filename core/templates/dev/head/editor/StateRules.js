@@ -45,29 +45,30 @@ oppia.factory('interactionHandlersCache', [function() {
 
 
 oppia.factory('rulesService', [
-    'stateInteractionIdService', 'interactionRepositoryService', 'interactionHandlersCache',
+    'stateInteractionIdService', 'INTERACTION_SPECS', 'interactionHandlersCache',
     'editorContextService', 'changeListService', 'explorationStatesService', 'graphDataService',
     'warningsData',
     function(
-      stateInteractionIdService, interactionRepositoryService, interactionHandlersCache,
+      stateInteractionIdService, INTERACTION_SPECS, interactionHandlersCache,
       editorContextService, changeListService, explorationStatesService, graphDataService,
       warningsData) {
 
   var _interactionHandlersMemento = null;
   var _activeRuleIndex = null;
   var _interactionHandlers = null;
-  var _interactionHandlerSpecs = null;
   var _answerChoices = null;
+  var _interactionHandlerSpecs = null;
 
   var _refreshHandlerSpecs = function() {
     if (!stateInteractionIdService.savedMemento) {
-      $log.error('ERROR: Interaction id not specified.');
+      // This can happen for a newly-created state, where the user has not set
+      // an interaction id.
+      _interactionHandlerSpecs = null;
+      return;
     }
 
-    interactionRepositoryService.getInteractionRepository().then(function(interactionRepository) {
-      _interactionHandlerSpecs = angular.copy(
-        interactionRepository[stateInteractionIdService.savedMemento].handler_specs);
-    });
+    _interactionHandlerSpecs = INTERACTION_SPECS[
+      stateInteractionIdService.savedMemento].handler_specs;
   };
 
   var _saveInteractionHandlers = function(newHandlers) {
@@ -102,7 +103,6 @@ oppia.factory('rulesService', [
       // Stores rules as key-value pairs. For each pair, the key is the
       // corresponding handler name and the value has several keys:
       // - 'definition' (the rule definition)
-      // - 'description' (the rule description string)
       // - 'dest' (the destination for this rule)
       // - 'feedback' (list of feedback given for this rule)
       // - 'param_changes' (parameter changes associated with this rule)
@@ -117,35 +117,33 @@ oppia.factory('rulesService', [
       _activeRuleIndex = 0;
     },
     onInteractionIdChanged: function(newInteractionId, callback) {
-      interactionRepositoryService.getInteractionRepository().then(function(interactionRepository) {
-        _refreshHandlerSpecs();
+      _refreshHandlerSpecs();
 
-        if (interactionHandlersCache.contains(newInteractionId)) {
-          _interactionHandlers = interactionHandlersCache.get(newInteractionId);
-        } else {
-          // Preserve just the default rule, unless the new interaction id is a
-          // terminal one (in which case, change its destination to be a
-          // self-loop instead).
-          _interactionHandlers = {
-            'submit': [
-              _interactionHandlers['submit'][_interactionHandlers['submit'].length - 1]
-            ]
-          };
-          if (interactionRepository[newInteractionId].is_terminal) {
-            _interactionHandlers['submit'][0].dest = editorContextService.getActiveStateName();
-          }
+      if (interactionHandlersCache.contains(newInteractionId)) {
+        _interactionHandlers = interactionHandlersCache.get(newInteractionId);
+      } else {
+        // Preserve just the default rule, unless the new interaction id is a
+        // terminal one (in which case, change its destination to be a
+        // self-loop instead).
+        _interactionHandlers = {
+          'submit': [
+            _interactionHandlers['submit'][_interactionHandlers['submit'].length - 1]
+          ]
+        };
+        if (INTERACTION_SPECS[newInteractionId].is_terminal) {
+          _interactionHandlers['submit'][0].dest = editorContextService.getActiveStateName();
         }
+      }
 
-        _saveInteractionHandlers(_interactionHandlers);
-        interactionHandlersCache.set(newInteractionId, _interactionHandlers);
+      _saveInteractionHandlers(_interactionHandlers);
+      interactionHandlersCache.set(newInteractionId, _interactionHandlers);
 
-        _interactionHandlersMemento = angular.copy(_interactionHandlers);
-        _activeRuleIndex = 0;
+      _interactionHandlersMemento = angular.copy(_interactionHandlers);
+      _activeRuleIndex = 0;
 
-        if (callback) {
-          callback();
-        }
-      });
+      if (callback) {
+        callback();
+      }
     },
     getActiveRuleIndex: function() {
       return _activeRuleIndex;
@@ -166,15 +164,16 @@ oppia.factory('rulesService', [
     deleteActiveRule: function() {
       if (_activeRuleIndex === _interactionHandlers.length - 1) {
         warningsData.addWarning('Cannot delete default rule.');
-        return;
+        return false;
       }
       if (!window.confirm('Are you sure you want to delete this rule?')) {
-        return;
+        return false;
       }
       _interactionHandlersMemento = angular.copy(_interactionHandlers);
       _interactionHandlers['submit'].splice(_activeRuleIndex, 1);
       _saveInteractionHandlers(_interactionHandlers);
       _activeRuleIndex = 0;
+      return true;
     },
     saveActiveRule: function(activeRule) {
       _interactionHandlers['submit'][_activeRuleIndex] = activeRule;
@@ -202,11 +201,12 @@ oppia.factory('rulesService', [
 
 
 oppia.controller('StateRules', [
-    '$scope', '$log', '$rootScope', '$modal', 'stateInteractionIdService', 'editorContextService',
+    '$scope', '$rootScope', '$modal', 'stateInteractionIdService', 'editorContextService',
     'warningsData', 'rulesService',
     function(
-      $scope, $log, $rootScope, $modal, stateInteractionIdService, editorContextService,
+      $scope, $rootScope, $modal, stateInteractionIdService, editorContextService,
       warningsData, rulesService) {
+  $scope.answerChoices = null;
 
   $scope.getAnswerChoices = function() {
     return rulesService.getAnswerChoices();
@@ -217,7 +217,6 @@ oppia.controller('StateRules', [
     $rootScope.$broadcast('externalSave');
     rulesService.changeActiveRuleIndex(newIndex);
     $scope.activeRuleIndex = rulesService.getActiveRuleIndex();
-    $rootScope.$broadcast('activeRuleChanged');
   };
 
   $scope.getCurrentInteractionId = function() {
@@ -228,21 +227,22 @@ oppia.controller('StateRules', [
     rulesService.init(data);
     $scope.interactionHandlers = rulesService.getInteractionHandlers();
     $scope.activeRuleIndex = rulesService.getActiveRuleIndex();
-    $rootScope.$broadcast('activeRuleChanged');
+    $scope.answerChoices = $scope.getAnswerChoices();
+    $rootScope.$broadcast('externalSave');
   });
 
   $scope.$on('onInteractionIdChanged', function(evt, newInteractionId) {
+    $rootScope.$broadcast('externalSave');
     rulesService.onInteractionIdChanged(newInteractionId, function() {
       $scope.interactionHandlers = rulesService.getInteractionHandlers();
       $scope.activeRuleIndex = rulesService.getActiveRuleIndex();
-      $rootScope.$broadcast('activeRuleChanged');
+      $scope.answerChoices = $scope.getAnswerChoices();
     });
   });
 
   $scope.$on('ruleDeleted', function(evt) {
     $scope.interactionHandlers = rulesService.getInteractionHandlers();
     $scope.activeRuleIndex = rulesService.getActiveRuleIndex();
-    $rootScope.$broadcast('activeRuleChanged');
   });
 
   $scope.$on('ruleSaved', function(evt) {
@@ -256,7 +256,15 @@ oppia.controller('StateRules', [
   // TODO(sll): Remove the need for this watcher, or make it less ad hoc.
   $scope.$on('updateAnswerChoices', function(evt, newAnswerChoices) {
     rulesService.updateAnswerChoices(newAnswerChoices);
+    $scope.answerChoices = $scope.getAnswerChoices();
   });
+
+  $scope.isDefaultRuleTabShown = function() {
+    var defaultRule = $scope.interactionHandlers.submit[$scope.interactionHandlers.submit.length - 1];
+    return (
+      defaultRule.dest !== editorContextService.getActiveStateName() ||
+      defaultRule.feedback.length > 0);
+  };
 
   $scope.openAddRuleModal = function() {
     warningsData.clear();
@@ -265,26 +273,51 @@ oppia.controller('StateRules', [
     $modal.open({
       templateUrl: 'modals/addRule',
       backdrop: true,
-      resolve: {},
+      resolve: {
+        canAddDefaultRule: function() {
+          return !$scope.isDefaultRuleTabShown();
+        }
+      },
       controller: [
-          '$scope', '$modalInstance', 'rulesService',
-          function($scope, $modalInstance, rulesService) {
-        $scope.currentRuleDescription = null;
-        $scope.currentRuleDefinition = {
-          rule_type: 'atomic',
-          name: null,
-          inputs: {},
-          subject: 'answer'
+          '$scope', '$modalInstance', 'rulesService', 'editorContextService', 'canAddDefaultRule',
+          function($scope, $modalInstance, rulesService, editorContextService, canAddDefaultRule) {
+        $scope.canAddDefaultRule = canAddDefaultRule;
+
+        $scope.tmpRule = {
+          definition: ($scope.canAddDefaultRule ? {
+            rule_type: 'default'
+          } : {
+            rule_type: 'atomic',
+            name: null,
+            inputs: {},
+            subject: 'answer'
+          }),
+          dest: editorContextService.getActiveStateName(),
+          feedback: [''],
+          param_changes: []
         };
+
+        $scope.isRuleEmpty = function(tmpRule) {
+          var hasFeedback = false;
+          for (var i = 0; i < tmpRule.feedback.length; i++) {
+            if (tmpRule.feedback[i].length > 0) {
+              hasFeedback = true;
+            }
+          }
+
+          return (
+            tmpRule.dest === editorContextService.getActiveStateName() &&
+            !hasFeedback);
+        };
+
+        $scope.addRuleForm = {};
 
         $scope.interactionHandlerSpecs = rulesService.getInteractionHandlerSpecs();
         $scope.answerChoices = rulesService.getAnswerChoices();
 
         $scope.addNewRule = function() {
-          $modalInstance.close({
-            description: $scope.currentRuleDescription,
-            definition: $scope.currentRuleDefinition
-          });
+          $scope.$broadcast('saveRuleDetails');
+          $modalInstance.close($scope.tmpRule);
         };
 
         $scope.cancel = function() {
@@ -295,21 +328,27 @@ oppia.controller('StateRules', [
     }).result.then(function(tmpRule) {
       _interactionHandlersMemento = angular.copy($scope.interactionHandlers);
 
-      // Move the tmp rule into the list of 'real' rules.
       var numRules = $scope.interactionHandlers['submit'].length;
-      $scope.interactionHandlers['submit'].splice(numRules - 1, 0, {
-        description: tmpRule.description,
-        definition: tmpRule.definition,
-        dest: editorContextService.getActiveStateName(),
-        feedback: [],
-        param_changes: []
-      });
 
-      rulesService.save($scope.interactionHandlers);
-
-      $scope.changeActiveRuleIndex($scope.interactionHandlers['submit'].length - 2);
+      if (tmpRule.definition.rule_type === 'default') {
+        if ($scope.isDefaultRuleTabShown()) {
+          warningsData.addWarning('Tried to add a duplicate default rule');
+          return;
+        } else {
+          tmpRule.definition = {rule_type: 'default'};
+          $scope.interactionHandlers['submit'][numRules - 1] = tmpRule;
+        }
+        rulesService.save($scope.interactionHandlers);
+        $scope.changeActiveRuleIndex($scope.interactionHandlers['submit'].length - 1);
+      } else {
+        $scope.interactionHandlers['submit'].splice(numRules - 1, 0, tmpRule);
+        rulesService.save($scope.interactionHandlers);
+        $scope.changeActiveRuleIndex($scope.interactionHandlers['submit'].length - 2);
+      }
     });
   };
+
+  $scope.isDraggingOccurring = false;
 
   $scope.RULE_LIST_SORTABLE_OPTIONS = {
     axis: 'y',
@@ -319,35 +358,36 @@ oppia.controller('StateRules', [
     tolerance: 'pointer',
     start: function(e, ui) {
       $rootScope.$broadcast('externalSave');
+      $scope.isDraggingOccurring = true;
       $scope.$apply();
       ui.placeholder.height(ui.item.height());
     },
     stop: function(e, ui) {
+      $scope.isDraggingOccurring = false;
       $scope.$apply();
       rulesService.save($scope.interactionHandlers);
       $scope.changeActiveRuleIndex(ui.item.index());
-      $rootScope.$broadcast('activeRuleChanged');
+      $rootScope.$broadcast('externalSave');
     }
   };
-}]);
 
-
-oppia.controller('StateEditorActiveRule', [
-    '$scope', '$rootScope', 'rulesService', function($scope, $rootScope, rulesService) {
-
-  $scope.interactionHandlers = rulesService.getInteractionHandlers();
-
-  $scope.$on('activeRuleChanged', function() {
-    $scope.activeRule = rulesService.getActiveRule();
-  });
-
-  $scope.deleteActiveRule = function() {
-    rulesService.deleteActiveRule();
-    $rootScope.$broadcast('ruleDeleted');
+  $scope.isActiveRuleEditorShown = function() {
+    var activeRule = rulesService.getActiveRule();
+    return activeRule && stateInteractionIdService.savedMemento && (
+      activeRule.definition.rule_type !== 'default' ||
+      activeRule.dest !== editorContextService.getActiveStateName() ||
+      activeRule.feedback.length > 0);
   };
 
-  $scope.saveRule = function() {
-    rulesService.saveActiveRule($scope.activeRule);
+  $scope.deleteActiveRule = function() {
+    var successfullyDeleted = rulesService.deleteActiveRule();
+    if (successfullyDeleted) {
+      $rootScope.$broadcast('ruleDeleted');
+    }
+  };
+
+  $scope.saveActiveRule = function(updatedRule) {
+    rulesService.saveActiveRule(updatedRule);
     $rootScope.$broadcast('ruleSaved');
   };
 }]);

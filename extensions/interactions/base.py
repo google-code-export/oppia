@@ -183,6 +183,16 @@ class BaseInteraction(object):
             feconf.INTERACTIONS_DIR, self.id, '%s.html' % self.id))
         return '<script>%s</script>\n%s' % (js_directives, html_templates)
 
+    @property
+    def validator_html(self):
+        """The HTML code containing validators for the interaction's
+        customization_args and handlers.
+        """
+        return (
+            '<script>%s</script>\n' %
+            utils.get_file_contents(os.path.join(
+                feconf.INTERACTIONS_DIR, self.id, 'validator.js')))
+
     def to_dict(self):
         """Gets a dict representing this interaction. Only default values are
         provided.
@@ -209,6 +219,12 @@ class BaseInteraction(object):
                 rule_cls.description,
                 {'classifier': rule_cls.__name__}
             ) for rule_cls in handler.rules)
+
+        # Add information about rule descriptions corresponding to the answer
+        # type for this interaction.
+        result['rule_descriptions'] = (
+            rule_domain.get_description_strings_for_obj_type(
+                self.handlers[0].obj_type))
 
         return result
 

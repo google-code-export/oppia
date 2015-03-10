@@ -44,8 +44,9 @@ STATE_PROPERTY_PARAM_CHANGES = 'param_changes'
 STATE_PROPERTY_CONTENT = 'content'
 STATE_PROPERTY_INTERACTION_ID = 'widget_id'
 STATE_PROPERTY_INTERACTION_CUST_ARGS = 'widget_customization_args'
-STATE_PROPERTY_INTERACTION_STICKY = 'widget_sticky'
 STATE_PROPERTY_INTERACTION_HANDLERS = 'widget_handlers'
+# Kept for legacy purposes; not used anymore.
+STATE_PROPERTY_INTERACTION_STICKY = 'widget_sticky'
 
 
 def _is_interaction_terminal(interaction_id):
@@ -419,7 +420,7 @@ class InteractionInstance(object):
     """Value object for an instance of an interaction."""
 
     # The default interaction used for a new state.
-    _DEFAULT_INTERACTION_ID = 'TextInput'
+    _DEFAULT_INTERACTION_ID = None
 
     def _get_full_customization_args(self):
         """Populates the customization_args dict of the interaction with
@@ -439,15 +440,19 @@ class InteractionInstance(object):
     def to_dict(self):
         return {
             'id': self.id,
-            'customization_args': self._get_full_customization_args(),
+            'customization_args': (
+                {} if self.id is None
+                else self._get_full_customization_args()),
             'handlers': [handler.to_dict() for handler in self.handlers],
-            'sticky': self.sticky
         }
 
     @classmethod
     def _get_obj_type(cls, interaction_id):
-        return interaction_registry.Registry.get_interaction_by_id(
-            interaction_id)._handlers[0]['obj_type']
+        if interaction_id is None:
+            return None
+        else:
+            return interaction_registry.Registry.get_interaction_by_id(
+                interaction_id)._handlers[0]['obj_type']
 
     @classmethod
     def from_dict(cls, interaction_dict):
@@ -456,11 +461,10 @@ class InteractionInstance(object):
             interaction_dict['id'],
             interaction_dict['customization_args'],
             [AnswerHandlerInstance.from_dict_and_obj_type(h, obj_type)
-             for h in interaction_dict['handlers']],
-            interaction_dict['sticky'])
+             for h in interaction_dict['handlers']])
 
     def __init__(
-            self, interaction_id, customization_args, handlers, sticky=False):
+            self, interaction_id, customization_args, handlers):
         self.id = interaction_id
         # Customization args for the interaction's view. Parts of these
         # args may be Jinja templates that refer to state parameters.
@@ -471,9 +475,6 @@ class InteractionInstance(object):
         # Answer handlers and rule specs.
         self.handlers = [AnswerHandlerInstance(h.name, h.rule_specs)
                          for h in handlers]
-        # If true, keep the interaction instance from the previous state if
-        # both are of the same type.
-        self.sticky = sticky
 
     def validate(self):
         if not isinstance(self.id, basestring):
@@ -528,11 +529,6 @@ class InteractionInstance(object):
         for handler in self.handlers:
             handler.validate()
 
-        if not isinstance(self.sticky, bool):
-            raise utils.ValidationError(
-                'Expected interaction \'sticky\' flag to be a boolean, '
-                'received %s' % self.sticky)
-
     @classmethod
     def create_default_interaction(cls, default_dest_state_name):
         default_obj_type = InteractionInstance._get_obj_type(
@@ -548,6 +544,22 @@ class InteractionInstance(object):
 class State(object):
     """Domain object for a state."""
 
+    NULL_INTERACTION_DICT = {
+        'id': None,
+        'customization_args': {},
+        'handlers': [{
+            'name': 'submit',
+            'rule_specs': [{
+                'dest': feconf.DEFAULT_INIT_STATE_NAME,
+                'definition': {
+                    'rule_type': 'default',
+                },
+                'feedback': [],
+                'param_changes': [],
+            }],
+        }],
+    }
+
     def __init__(self, content, param_changes, interaction):
         # The content displayed to the reader in this state.
         self.content = [Content(item.type, item.value) for item in content]
@@ -559,9 +571,9 @@ class State(object):
         # The interaction instance associated with this state.
         self.interaction = InteractionInstance(
             interaction.id, interaction.customization_args,
-            interaction.handlers, interaction.sticky)
+            interaction.handlers)
 
-    def validate(self):
+    def validate(self, allow_null_interaction):
         if not isinstance(self.content, list):
             raise utils.ValidationError(
                 'Expected state content to be a list, received %s'
@@ -579,7 +591,12 @@ class State(object):
         for param_change in self.param_changes:
             param_change.validate()
 
-        self.interaction.validate()
+        if not allow_null_interaction:
+            if self.interaction.id is None:
+                raise utils.ValidationError(
+                    'This state does not have any interaction specified.')
+            else:
+                self.interaction.validate()
 
     def update_content(self, content_list):
         # TODO(sll): Must sanitize all content in RTE component attrs.
@@ -593,13 +610,12 @@ class State(object):
     def update_interaction_id(self, interaction_id):
         self.interaction.id = interaction_id
         # TODO(sll): This should also clear interaction.handlers (except for
-        # the default rule).
+        # the default rule). This is somewhat mitigated because the client
+        # updates interaction_handlers directly after this, but we should fix
+        # it.
 
     def update_interaction_customization_args(self, customization_args):
         self.interaction.customization_args = customization_args
-
-    def update_interaction_sticky(self, interaction_is_sticky):
-        self.interaction.sticky = interaction_is_sticky
 
     def update_interaction_handlers(self, handlers_dict):
         if not isinstance(handlers_dict, dict):
@@ -837,7 +853,7 @@ class Exploration(object):
             raise utils.ValidationError(
                 'Invalid state name: %s' % feconf.END_DEST)
 
-    def validate(self, strict=False):
+    def validate(self, strict=False, allow_null_interaction=False):
         """Validates the exploration before it is committed to storage.
 
         If strict is True, performs advanced validation.
@@ -904,7 +920,8 @@ class Exploration(object):
             raise utils.ValidationError('This exploration has no states.')
         for state_name in self.states:
             self._require_valid_state_name(state_name)
-            self.states[state_name].validate()
+            self.states[state_name].validate(
+                allow_null_interaction=allow_null_interaction)
 
         if not self.init_state_name:
             raise utils.ValidationError(
@@ -992,10 +1009,6 @@ class Exploration(object):
 
         if strict:
             warnings_list = []
-            try:
-                self._verify_no_self_loops()
-            except utils.ValidationError as e:
-                warnings_list.append(unicode(e))
 
             try:
                 self._verify_all_states_reachable()
@@ -1023,35 +1036,6 @@ class Exploration(object):
                 raise utils.ValidationError(
                     'Please fix the following issues before saving this '
                     'exploration: %s' % warning_str)
-
-    def _verify_no_self_loops(self):
-        """Verify that there are no feedback-less self-loops."""
-        for (state_name, state) in self.states.iteritems():
-            if not _is_interaction_terminal(state.interaction.id):
-                for handler in state.interaction.handlers:
-                    for rule in handler.rule_specs:
-                        # Check that there are no feedback-less self-loops.
-                        # NB: Sometimes it makes sense for a self-loop to not
-                        # have feedback, such as unreachable rules in a
-                        # ruleset for multiple-choice questions. This should
-                        # be handled in the frontend so that a valid dict with
-                        # feedback for every self-loop is always saved to the
-                        # backend.
-                        if (rule.dest == state_name and not rule.feedback
-                                and not state.interaction.sticky):
-                            if rule.is_default:
-                                error_msg = (
-                                    'Please give Oppia something to say for '
-                                    'the default rule in state "%s", '
-                                    'otherwise the learner is likely to '
-                                    'get frustrated.' % state_name)
-                            else:
-                                error_msg = (
-                                    'Please add feedback for any rules in '
-                                    'state "%s" which loop back to that '
-                                    'state, otherwise the learner is likely '
-                                    'to get frustrated.' % state_name)
-                            raise utils.ValidationError(error_msg)
 
     def _verify_all_states_reachable(self):
         """Verifies that all states are reachable from the initial state."""
@@ -1253,25 +1237,6 @@ class Exploration(object):
 
         del self.states[state_name]
 
-    def export_state_to_frontend_dict(self, state_name):
-        """Gets a state dict with rule descriptions."""
-        state_dict = self.states[state_name].to_dict()
-
-        for handler in state_dict['interaction']['handlers']:
-            for rule_spec in handler['rule_specs']:
-
-                interaction = (
-                    interaction_registry.Registry.get_interaction_by_id(
-                        state_dict['interaction']['id']))
-
-                rule_spec['description'] = rule_domain.get_rule_description(
-                    rule_spec['definition'],
-                    self.param_specs,
-                    interaction.get_handler_by_name(handler['name']).obj_type
-                )
-
-        return state_dict
-
     # The current version of the exploration schema. If any backward-
     # incompatible changes are made to the exploration schema in the YAML
     # definitions, this version number must be changed and a migration process
@@ -1316,6 +1281,7 @@ class Exploration(object):
             state_defn['interaction']['id'] = copy.deepcopy(
                 state_defn['interaction']['widget_id'])
             del state_defn['interaction']['widget_id']
+            del state_defn['interaction']['sticky']
             del state_defn['widget']
 
         return exploration_dict
@@ -1407,7 +1373,7 @@ class Exploration(object):
 
             state.interaction = InteractionInstance(
                 idict['id'], idict['customization_args'],
-                interaction_handlers, idict['sticky'])
+                interaction_handlers)
 
             exploration.states[state_name] = state
 
@@ -1439,13 +1405,13 @@ class Exploration(object):
         learner view."""
         return {
             'init_state_name': self.init_state_name,
-            'title': self.title,
-            'states': {
-                state_name: self.export_state_to_frontend_dict(state_name)
-                for state_name in self.states
-            },
             'param_changes': self.param_change_dicts,
             'param_specs': self.param_specs_dict,
+            'states': {
+                state_name: state.to_dict()
+                for (state_name, state) in self.states.iteritems()
+            },
+            'title': self.title,
         }
 
     def get_interaction_ids(self):
@@ -1458,16 +1424,23 @@ class ExplorationSummary(object):
     """Domain object for an Oppia exploration summary."""
 
     def __init__(self, exploration_id, title, category, objective,
-                 language_code, skill_tags, status,
+                 language_code, skill_tags, ratings, status,
                  community_owned, owner_ids, editor_ids,
                  viewer_ids, version, exploration_model_created_on,
                  exploration_model_last_updated):
+        """'ratings' is a dict whose keys are '1', '2', '3', '4', '5' and whose
+        values are nonnegative integers representing frequency counts. Note
+        that the keys need to be strings in order for this dict to be
+        JSON-serializable.
+        """
+
         self.id = exploration_id
         self.title = title
         self.category = category
         self.objective = objective
         self.language_code = language_code
         self.skill_tags = skill_tags
+        self.ratings = ratings
         self.status = status
         self.community_owned = community_owned
         self.owner_ids = owner_ids

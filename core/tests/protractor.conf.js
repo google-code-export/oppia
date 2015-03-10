@@ -131,7 +131,7 @@ exports.config = {
 
     // Set a wide enough window size for the navbar in the gallery to display
     // fully.
-    browser.driver.manage().window().setSize(1200, 1200);
+    browser.driver.manage().window().setSize(1100, 1000);
   },
 
   // The params object will be passed directly to the protractor instance,
@@ -166,7 +166,7 @@ exports.config = {
     // If true, include stack traces in failures.
     includeStackTrace: true,
     // Default time to wait in ms before a test fails.
-    defaultTimeoutInterval: 400000
+    defaultTimeoutInterval: 600000
   },
 
   // ----- Options to be passed to mocha -----

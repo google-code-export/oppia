@@ -76,11 +76,13 @@ def get_exploration_summary_from_model(exp_summary_model):
         exp_summary_model.id, exp_summary_model.title,
         exp_summary_model.category, exp_summary_model.objective,
         exp_summary_model.language_code, exp_summary_model.skill_tags,
-        exp_summary_model.status, exp_summary_model.community_owned,
-        exp_summary_model.owner_ids, exp_summary_model.editor_ids,
-        exp_summary_model.viewer_ids, exp_summary_model.version,
+        exp_summary_model.ratings, exp_summary_model.status,
+        exp_summary_model.community_owned, exp_summary_model.owner_ids,
+        exp_summary_model.editor_ids, exp_summary_model.viewer_ids,
+        exp_summary_model.version,
         exp_summary_model.exploration_model_created_on,
-        exp_summary_model.exploration_model_last_updated)
+        exp_summary_model.exploration_model_last_updated
+    )
 
 
 def get_exploration_by_id(exploration_id, strict=True, version=None):
@@ -117,9 +119,9 @@ def get_exploration_summary_by_id(exploration_id):
 
 
 def get_multiple_explorations_by_id(exp_ids, strict=True):
-    """Returns a dict of domain objects representing explorations with the given
-    ids as keys. If an exp_id is not present it is not included in the return
-    dict.
+    """Returns a dict of domain objects representing explorations with the
+    given ids as keys. If an exp_id is not present it is not included in the
+    return dict.
     """
     exp_ids = set(exp_ids)
     result = {}
@@ -228,16 +230,49 @@ def get_exploration_summaries_matching_ids(exp_ids):
 
 
 def get_exploration_summaries_matching_query(query_string, cursor=None):
-    """Returns a dict with all exploration summary domain objects matching the
+    """Returns a list with all exploration summary domain objects matching the
     given search query string, as well as a search cursor for future fetches.
+
+    This method returns exactly feconf.GALLERY_PAGE_SIZE results if there are
+    at least that many, otherwise it returns all remaining results. (If this
+    behaviour does not occur, an error will be logged.) The method also returns
+    a search cursor.
     """
-    exp_ids, search_cursor = search_explorations(query_string, cursor=cursor)
-    summary_models = [
-        model for model in exp_models.ExpSummaryModel.get_multi(exp_ids)
-        if model is not None]
-    return (
-        _get_exploration_summary_dicts_from_models(summary_models),
-        search_cursor)
+    MAX_ITERATIONS = 10
+    summary_models = []
+
+    for i in range(MAX_ITERATIONS):
+        remaining_to_fetch = feconf.GALLERY_PAGE_SIZE - len(summary_models)
+
+        exp_ids, search_cursor = search_explorations(
+            query_string, remaining_to_fetch, cursor=cursor)
+
+        invalid_exp_ids = []
+        for ind, model in enumerate(
+                exp_models.ExpSummaryModel.get_multi(exp_ids)):
+            if model is not None:
+                summary_models.append(model)
+            else:
+                invalid_exp_ids.append(exp_ids[ind])
+
+        if len(summary_models) == feconf.GALLERY_PAGE_SIZE or (
+                search_cursor is None):
+            break
+        else:
+            logging.error(
+                'Search index contains stale exploration ids: %s' %
+                ', '.join(invalid_exp_ids))
+
+    if (len(summary_models) < feconf.GALLERY_PAGE_SIZE
+            and search_cursor is not None):
+        logging.error(
+            'Could not fulfill search request for query string %s; at least '
+            '%s retries were needed.' % (query_string, MAX_ITERATIONS))
+
+    return ([
+        get_exploration_summary_from_model(summary_model)
+        for summary_model in summary_models
+    ], search_cursor)
 
 
 def get_non_private_exploration_summaries():
@@ -352,9 +387,6 @@ def apply_change_list(exploration_id, change_list):
                         exp_domain.STATE_PROPERTY_INTERACTION_CUST_ARGS):
                     state.update_interaction_customization_args(
                         change.new_value)
-                elif (change.property_name ==
-                        exp_domain.STATE_PROPERTY_INTERACTION_STICKY):
-                    state.update_interaction_sticky(change.new_value)
                 elif (change.property_name ==
                         exp_domain.STATE_PROPERTY_INTERACTION_HANDLERS):
                     state.update_interaction_handlers(change.new_value)
@@ -592,7 +624,7 @@ def _create_exploration(
     """
     # This line is needed because otherwise a rights object will be created,
     # but the creation of an exploration object will fail.
-    exploration.validate()
+    exploration.validate(allow_null_interaction=True)
     rights_manager.create_new_exploration_rights(exploration.id, committer_id)
     model = exp_models.ExplorationModel(
         id=exploration.id,
@@ -757,14 +789,14 @@ def create_exploration_summary(exploration_id):
     """Create summary of an exploration and store in datastore."""
     exploration = get_exploration_by_id(exploration_id)
     exp_summary = get_summary_of_exploration(exploration)
-    _save_exploration_summary(exp_summary)
+    save_exploration_summary(exp_summary)
 
 
 def update_exploration_summary(exploration_id):
     """Update the summary of an exploration."""
     exploration = get_exploration_by_id(exploration_id)
     exp_summary = get_summary_of_exploration(exploration)
-    _save_exploration_summary(exp_summary)
+    save_exploration_summary(exp_summary)
 
 
 def get_summary_of_exploration(exploration):
@@ -772,31 +804,29 @@ def get_summary_of_exploration(exploration):
     domain object and return it.
     """
     exp_rights = exp_models.ExplorationRightsModel.get_by_id(exploration.id)
+    exp_summary_model = exp_models.ExpSummaryModel.get_by_id(exploration.id)
+    if exp_summary_model:
+        old_exp_summary = get_exploration_summary_from_model(exp_summary_model)
+        ratings = old_exp_summary.ratings or feconf.get_empty_ratings()
+    else:
+        ratings = feconf.get_empty_ratings()
 
     exploration_model_last_updated = exploration.last_updated
     exploration_model_created_on = exploration.created_on
 
     exp_summary = exp_domain.ExplorationSummary(
-        exploration.id,
-        exploration.title,
-        exploration.category,
-        exploration.objective,
-        exploration.language_code,
-        exploration.skill_tags,
-        exp_rights.status,
-        exp_rights.community_owned,
-        exp_rights.owner_ids,
-        exp_rights.editor_ids,
-        exp_rights.viewer_ids,
-        exploration.version,
-        exploration_model_created_on,
-        exploration_model_last_updated
+        exploration.id, exploration.title, exploration.category,
+        exploration.objective, exploration.language_code,
+        exploration.skill_tags, ratings, exp_rights.status,
+        exp_rights.community_owned, exp_rights.owner_ids,
+        exp_rights.editor_ids, exp_rights.viewer_ids, exploration.version,
+        exploration_model_created_on, exploration_model_last_updated
     )
 
     return exp_summary
 
 
-def _save_exploration_summary(exp_summary):
+def save_exploration_summary(exp_summary):
     """Save exploration summary domain object as ExpSummaryModel
     entity in datastore."""
 
@@ -807,6 +837,7 @@ def _save_exploration_summary(exp_summary):
         objective=exp_summary.objective,
         language_code=exp_summary.language_code,
         skill_tags=exp_summary.skill_tags,
+        ratings = exp_summary.ratings,
         status=exp_summary.status,
         community_owned=exp_summary.community_owned,
         owner_ids=exp_summary.owner_ids,
@@ -993,7 +1024,8 @@ def get_next_page_of_all_non_private_commits(
         https://developers.google.com/appengine/docs/python/ndb/queryclass
     """
     if max_age is not None and not isinstance(max_age, datetime.timedelta):
-        raise ValueError("max_age must be a datetime.timedelta instance. or None.")
+        raise ValueError(
+            "max_age must be a datetime.timedelta instance. or None.")
 
     results, new_urlsafe_start_cursor, more = (
         exp_models.ExplorationCommitLogEntryModel.get_all_non_private_commits(
@@ -1020,6 +1052,26 @@ def _should_index(exp):
     return rights.status != rights_manager.EXPLORATION_STATUS_PRIVATE
 
 
+def _get_search_rank(exp_id):
+    """Returns an integer determining the document's rank in search.
+
+    Featured explorations get a ranking bump, and so do explorations that
+    have been more recently updated.
+    """
+    # TODO(sll): Improve this calculation.
+    exploration = get_exploration_by_id(exp_id)
+    rights = rights_manager.get_exploration_rights(exp_id)
+    rank = (
+        3000 if rights.status == rights_manager.EXPLORATION_STATUS_PUBLICIZED
+        else 0)
+
+    _BEGINNING_OF_TIME = datetime.datetime(2013, 6, 30)
+    time_delta_days = (exploration.last_updated - _BEGINNING_OF_TIME).days
+    rank += int(time_delta_days)
+
+    return rank
+
+
 def _exp_to_search_dict(exp):
     rights = rights_manager.get_exploration_rights(exp.id)
     doc = {
@@ -1031,14 +1083,17 @@ def _exp_to_search_dict(exp):
         'blurb': exp.blurb,
         'objective': exp.objective,
         'author_notes': exp.author_notes,
+        'rank': _get_search_rank(exp.id),
     }
     doc.update(_exp_rights_to_search_dict(rights))
-
-    # TODO(frederik): Calculate an exploration's 'rank' based on statistics.
-    # By default, a document's rank is the time it was indexed, so the most
-    # recently changed explorations would rank higher.
-
     return doc
+
+
+def clear_search_index():
+    """WARNING: This runs in-request, and may therefore fail if there are too
+    many entries in the index.
+    """
+    search_services.clear_index(SEARCH_INDEX_EXPLORATIONS)
 
 
 def index_explorations_given_ids(exp_ids):
@@ -1074,8 +1129,7 @@ def delete_documents_from_search_index(exploration_ids):
         exploration_ids, SEARCH_INDEX_EXPLORATIONS)
 
 
-def search_explorations(
-    query, sort=None, limit=feconf.GALLERY_PAGE_SIZE, cursor=None):
+def search_explorations(query, limit, sort=None, cursor=None):
     """Searches through the available explorations.
 
     args:

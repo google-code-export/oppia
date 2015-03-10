@@ -22,13 +22,16 @@
 // TODO(sll): Move all hardcoded strings to the top of the file.
 var END_DEST = 'END';
 
+// The conditioning on window.GLOBALS is because Karma does not appear to see GLOBALS.
+oppia.constant('INTERACTION_SPECS', window.GLOBALS ? GLOBALS.INTERACTION_SPECS : {});
+
 oppia.controller('ExplorationEditor', [
   '$scope', '$http', '$window', '$rootScope', '$log', '$timeout',
   'explorationData', 'editorContextService', 'explorationTitleService',
   'explorationCategoryService', 'explorationObjectiveService',
   'explorationLanguageCodeService', 'explorationRightsService',
   'explorationInitStateNameService', 'editabilityService',
-  'interactionRepositoryService', 'explorationStatesService', 'routerService',
+  'explorationStatesService', 'routerService',
   'graphDataService', 'stateEditorTutorialFirstTimeService',
   'explorationParamSpecsService', 'explorationWarningsService',
   '$templateCache',
@@ -38,7 +41,7 @@ oppia.controller('ExplorationEditor', [
     explorationCategoryService, explorationObjectiveService,
     explorationLanguageCodeService, explorationRightsService,
     explorationInitStateNameService, editabilityService,
-    interactionRepositoryService, explorationStatesService, routerService,
+    explorationStatesService, routerService,
     graphDataService,  stateEditorTutorialFirstTimeService,
     explorationParamSpecsService, explorationWarningsService, $templateCache) {
 
@@ -86,7 +89,6 @@ oppia.controller('ExplorationEditor', [
   // page load.
   $scope.initExplorationPage = function(successCallback) {
     explorationData.getData().then(function(data) {
-      interactionRepositoryService.setInteractionRepository(data.ALL_INTERACTIONS);
       explorationStatesService.setStates(data.states);
 
       explorationTitleService.init(data.title);
@@ -133,8 +135,6 @@ oppia.controller('ExplorationEditor', [
 
       explorationWarningsService.updateWarnings();
 
-      $rootScope.loadingMessage = '';
-
       $scope.$broadcast('refreshStatisticsTab');
       $scope.$broadcast('refreshVersionHistory', {forceRefresh: true});
 
@@ -159,98 +159,89 @@ oppia.controller('ExplorationEditor', [
   var _ID_TUTORIAL_STATE_CONTENT = '#tutorialStateContent';
   var _ID_TUTORIAL_STATE_INTERACTION = '#tutorialStateInteraction';
   var _ID_TUTORIAL_STATE_ACTIVE_RULE = '#tutorialStateActiveRule';
+  var _ID_TUTORIAL_PREVIEW_TAB = "#tutorialPreviewTab";
+  var _ID_TUTORIAL_SAVE_BUTTON = "#tutorialSaveButton";
 
   $scope.EDITOR_TUTORIAL_OPTIONS = [{
     type: 'title',
-    heading: 'Welcome to the Oppia editor tutorial!',
+    heading: 'Tutorial',
     text: (
-      'Welcome to Oppia! Here\'s a quick overview of how the editor works.<br><br>' +
-      'You can think of an Oppia exploration as a one-on-one conversation that is divided ' +
-      'into several \'states\'. A state consists of Oppia asking a question, and the ' +
-      'learner responding. Based on the response, Oppia chooses what to say next.')
+      'Creating an Oppia exploration is easy! ' +
+      'Click \'Next\' to learn how to use the exploration editor.<br><br> ' +
+      'You might also find these resources helpful for creating your exploration: ' +
+      '<ul>'+
+      '<li><a href="https://code.google.com/p/oppia/wiki/PlanningYourExploration" target="_blank">' +
+      '        Planning Your Exploration' +
+      '</a></li>' +
+      '<li><a href="https://code.google.com/p/oppia/wiki/DesignTips" target="_blank">' +
+      '        Exploration Design Tips' +
+      '</li>' +
+      '</ul>')
   }, {
     type: 'function',
     fn: function(isGoingForward) {
-      var positionToScrollTo = (
-        isGoingForward ? angular.element(_ID_TUTORIAL_STATE_CONTENT).offset().top - 80 : 0);
-      $('body').animate({
-        scrollTop: positionToScrollTo
-      }, 'slow');
+      $('html, body').animate({
+        scrollTop: (isGoingForward ? 0 : 20)
+      }, 1000);
     }
   }, {
     type: 'element',
     selector: _ID_TUTORIAL_STATE_CONTENT,
     heading: 'Content',
     text: (
-      'This is where you can tell Oppia what to say to the learner at the beginning. ' +
-      'For example, Oppia may say:<br><br>' +
-      '<em>"Jane bought a new alarm clock with a 12-hour display. It now shows ' +
-      '12:45 and she wants to leave the house for lunch in half an hour. <br><br>' +
-      'What time should she set the alarm to?"</em>'),
-    placement: 'bottom',
-    scroll: false
+      'An Oppia exploration is a one-on-one conversation that is divided ' +
+      'into several \'states\'. A state consists of Oppia asking a question, and the ' +
+      'learner responding.<br><br>' +
+      'This is where you can tell Oppia what to say to the learner at the beginning.'),
+    placement: 'right'
   }, {
     type: 'function',
     fn: function(isGoingForward) {
       var idToScrollTo = (
         isGoingForward ? _ID_TUTORIAL_STATE_INTERACTION :
         _ID_TUTORIAL_STATE_CONTENT);
-      $('body').animate({
-        scrollTop: angular.element(idToScrollTo).offset().top - 80
-      }, 'slow');
+      $('html, body').animate({
+        scrollTop: angular.element(idToScrollTo).offset().top - 200
+      }, 1000);
     }
   }, {
     type: 'element',
     selector: _ID_TUTORIAL_STATE_INTERACTION,
     heading: 'Interaction',
     text: (
-      'Next, choose how you\'d like the learner to respond by ' +
-      'selecting an interaction from the menu, then click on the preview ' +
-      'shown here to tweak its display.'),
-    placement: 'bottom',
-    scroll: false
-  }, {
-    type: 'function',
-    fn: function(isGoingForward) {
-      var idToScrollTo = (
-        isGoingForward ? _ID_TUTORIAL_STATE_ACTIVE_RULE :
-        _ID_TUTORIAL_STATE_INTERACTION);
-      $('body').animate({
-        scrollTop: angular.element(idToScrollTo).offset().top - 80
-      }, 'slow');
-    }
-  }, {
-    type: 'element',
-    selector: _ID_TUTORIAL_STATE_ACTIVE_RULE,
-    heading: 'Rules',
-    text: (
-      'After the learner responds, you can tell Oppia how to reply by ' +
-      'creating a <b>rule</b>.<br><br>' +
-      'For example, if the learner types \'13:15\', ' +
-      'Oppia might reply: <em>"Remember, there is no \'13\' on a 12-hour ' +
-      'clock. Try again?"</em>'),
-    placement: 'bottom',
-    scroll: false
+      'Next, choose how you want the learner to respond by ' +
+      'selecting an <b>interaction type</b> from the drop down menu.<br><br>' +
+      'You can see a preview of the interaction below. <br><br>' +
+      'Then, after the learner responds, you can tell Oppia how to reply by ' +
+      'creating a <b>rule</b>.'),
+    placement: 'right'
   }, {
     type: 'function',
     fn: function(isGoingForward) {
       var positionToScrollTo = (
         isGoingForward ? 0 :
-        angular.element(_ID_TUTORIAL_STATE_ACTIVE_RULE).offset().top - 80);
-      $('body').animate({
+        angular.element(_ID_TUTORIAL_STATE_INTERACTION).offset().top - 200);
+      $('html, body').animate({
         scrollTop: positionToScrollTo
-      }, 'slow');
+      }, 1000);
     }
   }, {
-    type: 'title',
-    heading: 'Get started!',
+    type: 'element',
+    selector: _ID_TUTORIAL_PREVIEW_TAB,
+    heading: 'Preview',
     text: (
-      'At any time, you can click the \'Preview\' tab to play through an interactive ' +
-      'version of your exploration. When you\'re done, click \'Publish Draft\' to save ' +
-      'your changes.<br><br>' +
-      'That\'s the end of the tour! For more information, including exploration ' +
-      'design tips, see the \'Help\' menu at the top of this page. If you run ' +
-      'into any issues, feel free to post in the site forum.')
+      'At any time, you can click the preview button to play through ' +
+      'your exploration.'),
+    placement: 'bottom'
+  }, {
+    type: 'element',
+    selector: _ID_TUTORIAL_SAVE_BUTTON,
+    heading: 'Save',
+    text: (
+      'When you\'re done making changes, ' +
+      'be sure to save your work.<br><br>' +
+      'That\'s the end of the tour! If you run into any issues, feel free to post in the site forum.'),
+    placement: 'bottom'
   }];
 
   // Replace the ng-joyride template with one that uses <[...]> interpolators instead of
@@ -309,13 +300,14 @@ oppia.controller('EditorNavigation', [
 
   $scope.countWarnings = explorationWarningsService.countWarnings;
   $scope.getWarnings = explorationWarningsService.getWarnings;
+  $scope.hasCriticalWarnings = explorationWarningsService.hasCriticalWarnings;
 
   $scope.explorationRightsService = explorationRightsService;
   $scope.getTabStatuses = routerService.getTabStatuses;
   $scope.selectMainTab = routerService.navigateToMainTab;
   $scope.selectPreviewTab = routerService.navigateToPreviewTab;
-  $scope.selectStatsTab = routerService.navigateToStatsTab;
   $scope.selectSettingsTab = routerService.navigateToSettingsTab;
+  $scope.selectStatsTab = routerService.navigateToStatsTab;
   $scope.selectHistoryTab = routerService.navigateToHistoryTab;
   $scope.selectFeedbackTab = routerService.navigateToFeedbackTab;
 }]);
@@ -336,8 +328,8 @@ oppia.controller('EditorNavbarBreadcrumb', [
   var _TAB_NAMES_TO_HUMAN_READABLE_NAMES = {
     'main': 'Edit',
     'preview': 'Preview',
-    'stats': 'Statistics',
     'settings': 'Settings',
+    'stats': 'Statistics',
     'history': 'History',
     'feedback': 'Feedback'
   };
@@ -353,7 +345,7 @@ oppia.controller('EditorNavbarBreadcrumb', [
 }]);
 
 
-oppia.controller('ExplorationPublishButton', [
+oppia.controller('ExplorationSaveAndPublishButtons', [
     '$scope', '$http', '$rootScope', '$window', '$timeout', '$modal', 'warningsData',
     'changeListService', 'focusService', 'routerService', 'explorationData',
     'explorationRightsService', 'editabilityService', 'explorationWarningsService',
@@ -369,6 +361,10 @@ oppia.controller('ExplorationPublishButton', [
   // yet), 'save' (the last action was a save) or 'discard' (the last action was a
   // discard).
   $scope.lastSaveOrDiscardAction = null;
+
+  $scope.isPrivate = function() {
+    return explorationRightsService.isPrivate();
+  };
 
   $scope.isExplorationLockedForEditing = function() {
     return changeListService.isExplorationLockedForEditing();
@@ -403,7 +399,10 @@ oppia.controller('ExplorationPublishButton', [
   };
 
   $scope.isExplorationSaveable = function() {
-    return $scope.isExplorationLockedForEditing() && !$scope.isSaveInProgress;
+    return (
+      $scope.isExplorationLockedForEditing() &&
+      !$scope.isSaveInProgress &&
+      !explorationWarningsService.hasCriticalWarnings());
   };
 
   $window.addEventListener('beforeunload', function(e) {
@@ -414,6 +413,44 @@ oppia.controller('ExplorationPublishButton', [
       return confirmationMessage;
     }
   });
+
+  $scope.isPublic = function() {
+    return explorationRightsService.isPublic();
+  };
+
+  $scope.showPublishExplorationModal = function() {
+    warningsData.clear();
+    $modal.open({
+      templateUrl: 'modals/publishExploration',
+      backdrop: true,
+      controller: ['$scope', '$modalInstance', function($scope, $modalInstance) {
+        $scope.publish = $modalInstance.close;
+
+        $scope.cancel = function() {
+          $modalInstance.dismiss('cancel');
+          warningsData.clear();
+        };
+      }]
+    }).result.then(function() {
+      explorationRightsService.saveChangeToBackend({is_public: true});
+    });
+  };
+
+  $scope.getPublishExplorationButtonTooltip = function() {
+    if (explorationWarningsService.countWarnings() > 0) {
+      return 'Please resolve the warnings before publishing.';
+    } else if ($scope.isExplorationLockedForEditing()) {
+      return 'Please save your changes before publishing.';
+    } else {
+      return 'Click this button to publish your exploration to the gallery.';
+    }
+  };
+
+  $scope.getSaveButtonTooltip = function() {
+    if (explorationWarningsService.hasCriticalWarnings() > 0) {
+      return 'Please resolve the warnings.';
+    }
+  };
 
   $scope.saveChanges = function() {
     routerService.savePendingChanges();
@@ -529,7 +566,6 @@ oppia.controller('ExplorationPublishButton', [
               'content': 'Content',
               'widget_id': 'Interaction type',
               'widget_customization_args': 'Interaction customizations',
-              'widget_sticky': 'Whether to reuse the previous interaction',
               'widget_handlers': 'Reader submission rules'
             }
 
@@ -540,7 +576,7 @@ oppia.controller('ExplorationPublishButton', [
             // TODO(sll): Implement this fully. Currently there is no sorting.
             $scope.ORDERED_STATE_PROPERTIES = [
               'name', 'param_changes', 'content', 'widget_id',
-              'widget_customization_args', 'widget_sticky', 'widget_handlers'
+              'widget_customization_args', 'widget_handlers'
             ];
 
             $scope.explorationChangesExist = !$.isEmptyObject(

@@ -18,6 +18,19 @@
  * @author sll@google.com (Sean Lip)
  */
 
+// Overwrite the default ui-bootstrap carousel template to remove the on-mouseover
+// behaviour, as well as the left and right arrows.
+angular.module("template/carousel/carousel.html", []).run(["$templateCache", function($templateCache) {
+  $templateCache.put("template/carousel/carousel.html",
+    "<div class=\"carousel\" ng-swipe-right=\"prev()\" ng-swipe-left=\"next()\">\n" +
+    "    <ol class=\"carousel-indicators\" ng-show=\"slides.length > 1\">\n" +
+    "        <li ng-repeat=\"slide in slides track by $index\" ng-class=\"{active: isActive(slide)}\" ng-click=\"select(slide)\"></li>\n" +
+    "    </ol>\n" +
+    "    <div class=\"carousel-inner\" ng-transclude></div>\n" +
+    "</div>\n" +
+    "");
+}]);
+
 oppia.constant('GALLERY_DATA_URL', '/galleryhandler/data');
 
 oppia.factory('searchService', [
@@ -109,79 +122,24 @@ oppia.controller('Gallery', [
     function($scope, $http, $rootScope, $window, $timeout, createExplorationButtonService,
              oppiaDatetimeFormatter, oppiaDebouncer, urlService, GALLERY_DATA_URL,
              CATEGORY_LIST, searchService) {
-  $scope.CAROUSEL_INTERVAL = 2500;
 
-  $scope.CAROUSEL_SLIDES = [{
-    explorationId: '14',
-    explorationSubject: 'astronomy',
-    imageUrl: '/images/splash-image-0.jpg'
-  }, {
-    explorationId: '9',
-    explorationSubject: 'music',
-    imageUrl: '/images/splash-image-1.jpg'
-  }, {
-    explorationId: '1',
-    explorationSubject: 'programming',
-    imageUrl: '/images/splash-image-2.jpg'
-  }];
+  $scope.CAROUSEL_INTERVAL = 3500;
+  $scope.CAROUSEL_SLIDES = GLOBALS.CAROUSEL_SLIDES_CONFIG || [];
 
-  // Default color.
-  var _COLOR_TEAL = 'teal';
-  // Social sciences.
-  var _COLOR_SALMON = 'salmon';
-  // Art.
-  var _COLOR_SUNNYSIDE = 'sunnyside';
-  // Mathematics and computing.
-  var _COLOR_SHARKFIN = 'sharkfin';
-  // Science.
-  var _COLOR_GUNMETAL = 'gunmetal';
-
-  var CATEGORY_TO_DEFAULT_COLOR = {
-    'Architecture': _COLOR_SUNNYSIDE,
-    'Art': _COLOR_SUNNYSIDE,
-    'Biology': _COLOR_GUNMETAL,
-    'Business': _COLOR_SALMON,
-    'Chemistry': _COLOR_GUNMETAL,
-    'Computing': _COLOR_SHARKFIN,
-    'Economics': _COLOR_SALMON,
-    'Education': _COLOR_TEAL,
-    'Engineering': _COLOR_GUNMETAL,
-    'Environment': _COLOR_GUNMETAL,
-    'Geography': _COLOR_SALMON,
-    'Government': _COLOR_SALMON,
-    'Hobbies': _COLOR_TEAL,
-    'Languages': _COLOR_SUNNYSIDE,
-    'Law': _COLOR_SALMON,
-    'Life Skills': _COLOR_TEAL,
-    'Mathematics': _COLOR_SHARKFIN,
-    'Medicine': _COLOR_GUNMETAL,
-    'Music': _COLOR_SUNNYSIDE,
-    'Philosophy': _COLOR_SALMON,
-    'Physics': _COLOR_GUNMETAL,
-    'Programming': _COLOR_SHARKFIN,
-    'Psychology': _COLOR_SALMON,
-    'Puzzles': _COLOR_TEAL,
-    'Reading': _COLOR_TEAL,
-    'Religion': _COLOR_SALMON,
-    'Sport': _COLOR_SUNNYSIDE,
-    'Statistics': _COLOR_SHARKFIN,
-    'Welcome': _COLOR_TEAL
-  };
-
-  // TODO(sll): Modify this once explorations can specify their own images.
-  $scope.getImageSrcUrl = function(exploration) {
-    return '/images/gallery/default.png';
-  };
-
-  // TODO(sll): Modify this once explorations can specify their own images.
-  $scope.getImageContainerClass = function(exploration) {
-    var color = CATEGORY_TO_DEFAULT_COLOR.hasOwnProperty(exploration.category) ?
-      CATEGORY_TO_DEFAULT_COLOR[exploration.category] : _COLOR_TEAL;
-    return 'oppia-gallery-tile-image-translucent oppia-gallery-tile-image-' + color;
-  };
+  // Preload images, otherwise they will only start showing up some time after
+  // the carousel slide comes into view. See:
+  //
+  //     http://stackoverflow.com/questions/1373142/preloading-css-background-images
+  for (var i = 0; i < $scope.CAROUSEL_SLIDES.length; i++) {
+    var pic = new Image();
+    pic.src = '/images/splash/' + $scope.CAROUSEL_SLIDES[i].image_filename;
+  }
 
   $scope.getFormattedObjective = function(objective) {
     objective = objective.trim();
+    if (objective.length > 120) {
+      objective = objective.substring(0, 120) + '...';
+    }
     return objective.charAt(0).toUpperCase() + objective.slice(1);
   };
 
@@ -197,7 +155,7 @@ oppia.controller('Gallery', [
 
   $scope.currentUserIsModerator = false;
 
-  $scope.inSplashMode = true;
+  $scope.inSplashMode = ($scope.CAROUSEL_SLIDES.length > 0);
   $scope.$on('hasChangedSearchQuery', function() {
     if ($scope.inSplashMode) {
       $('.oppia-gallery-container').fadeOut(function() {
@@ -216,19 +174,19 @@ oppia.controller('Gallery', [
   // Called when the page loads, and after every search query.
   var _refreshGalleryData = function(data, hasPageFinishedLoading) {
     $scope.searchIsLoading = false;
-    $scope.allExplorationsInOrder = data.featured.concat(data['public']);
+    $scope.allExplorationsInOrder = data.explorations_list;
     $scope.finishedLoadingPage = hasPageFinishedLoading;
     $rootScope.loadingMessage = '';
   };
 
   $scope.pageLoaderIsBusy = false;
-  $scope.showMoreExplorations = function(data) {
+  $scope.showMoreExplorations = function() {
     if (!$rootScope.loadingMessage) {
       $scope.pageLoaderIsBusy = true;
 
       searchService.loadMoreData(function(data, hasPageFinishedLoading) {
         $scope.allExplorationsInOrder = $scope.allExplorationsInOrder.concat(
-          data.featured).concat(data['public']);
+          data.explorations_list);
         $scope.finishedLoadingPage = hasPageFinishedLoading;
         $scope.pageLoaderIsBusy = false;
       });
@@ -243,11 +201,9 @@ oppia.controller('Gallery', [
   $http.get(GALLERY_DATA_URL).success(function(data) {
     $scope.currentUserIsModerator = Boolean(data.is_moderator);
 
+    // Note that this will cause an initial search query to be sent.
     $rootScope.$broadcast(
       'preferredLanguageCodesLoaded', data.preferred_language_codes);
-
-    // TODO(sll): Page the initial load as well.
-    _refreshGalleryData(data, true);
 
     if (data.username) {
       if (urlService.getUrlParams().mode === 'create') {
@@ -366,8 +322,18 @@ oppia.controller('SearchBar', [
 
   $scope.$on('preferredLanguageCodesLoaded', function(evt, preferredLanguageCodesList) {
     for (var i = 0; i < preferredLanguageCodesList.length; i++) {
-      $scope.toggleSelection('languageCodes', preferredLanguageCodesList[i]);
+      var selections = $scope.selectionDetails.languageCodes.selections;
+      var languageCode = preferredLanguageCodesList[i];
+      if (!selections.hasOwnProperty(languageCode)) {
+        selections[languageCode] = true;
+      } else {
+        selections[languageCode] = !selections[languageCode];
+      }
     }
+
+    _updateSelectionDetails('languageCodes');
+    _onSearchQueryChangeExec();
+
     _searchBarFullyLoaded = true;
   });
 

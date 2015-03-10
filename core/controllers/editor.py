@@ -22,7 +22,6 @@ import imghdr
 import logging
 
 from core.controllers import base
-from core.controllers import reader
 from core.domain import config_domain
 from core.domain import dependency_registry
 from core.domain import event_services
@@ -30,8 +29,6 @@ from core.domain import exp_domain
 from core.domain import exp_services
 from core.domain import fs_domain
 from core.domain import interaction_registry
-from core.domain import obj_services
-from core.domain import param_domain
 from core.domain import rights_manager
 from core.domain import rte_component_registry
 from core.domain import skins_services
@@ -56,26 +53,7 @@ NEW_STATE_TEMPLATE = {
         'type': 'text',
         'value': ''
     }],
-    'interaction': {
-        'customization_args': {
-            'rows': {'value': 1},
-            'placeholder': {'value': ''}
-        },
-        'handlers': [{
-            'name': 'submit',
-            'rule_specs': [{
-                'dest': feconf.DEFAULT_INIT_STATE_NAME,
-                'definition': {
-                    'rule_type': 'default'
-                },
-                'feedback': [],
-                'param_changes': [],
-                'description': 'Default',
-            }],
-        }],
-        'id': 'TextInput',
-        'sticky': False
-    },
+    'interaction': exp_domain.State.NULL_INTERACTION_DICT,
     'param_changes': [],
     'unresolved_answers': {},
 }
@@ -91,23 +69,16 @@ def get_value_generators_js():
     return value_generators_js
 
 VALUE_GENERATORS_JS = config_domain.ComputedProperty(
-    'value_generators_js', 'UnicodeString',
+    'value_generators_js', {'type': 'unicode'},
     'JavaScript code for the value generators', get_value_generators_js)
 
-OBJECT_EDITORS_JS = config_domain.ComputedProperty(
-    'object_editors_js', 'UnicodeString',
-    'JavaScript code for the object editors',
-    obj_services.get_all_object_editor_js_templates)
-
-EDITOR_PAGE_ANNOUNCEMENT = config_domain.ConfigProperty(
-    'editor_page_announcement', 'Html',
-    'A persistent announcement to display on top of all editor pages.',
-    default_value='')
+MODERATOR_REQUEST_FORUM_URL_DEFAULT_VALUE = (
+    'https://moderator/request/forum/url')
 MODERATOR_REQUEST_FORUM_URL = config_domain.ConfigProperty(
-    'moderator_request_forum_url', 'UnicodeString',
+    'moderator_request_forum_url', {'type': 'unicode'},
     'A link to the forum for nominating explorations to be featured '
     'in the gallery',
-    default_value='https://moderator/request/forum/url')
+    default_value=MODERATOR_REQUEST_FORUM_URL_DEFAULT_VALUE)
 
 
 def _require_valid_version(version_from_payload, exploration_version):
@@ -203,9 +174,6 @@ class ExplorationPage(EditorHandler):
             self.username not in config_domain.BANNED_USERNAMES.value and
             rights_manager.Actor(self.user_id).can_edit(exploration_id))
 
-        # TODO(sll): Consider including the obj_generator html in a ng-template
-        # to remove the need for an additional RPC?
-        object_editors_js = OBJECT_EDITORS_JS.value
         value_generators_js = VALUE_GENERATORS_JS.value
 
         interaction_ids = (
@@ -222,14 +190,16 @@ class ExplorationPage(EditorHandler):
             rte_component_registry.Registry.get_html_for_all_components() +
             interaction_registry.Registry.get_interaction_html(
                 interaction_ids))
+        interaction_validators_html = (
+            interaction_registry.Registry.get_validators_html(
+                interaction_ids))
 
         skin_templates = skins_services.Registry.get_skin_templates(
             skins_services.Registry.get_all_skin_ids())
 
         self.values.update({
+            'INTERACTION_SPECS': interaction_registry.Registry.get_all_specs(),
             'additional_angular_modules': additional_angular_modules,
-            'announcement': jinja2.utils.Markup(
-                EDITOR_PAGE_ANNOUNCEMENT.value),
             'can_delete': rights_manager.Actor(
                 self.user_id).can_delete(exploration_id),
             'can_edit': can_edit,
@@ -246,13 +216,12 @@ class ExplorationPage(EditorHandler):
             'can_unpublish': rights_manager.Actor(self.user_id).can_unpublish(
                 exploration_id),
             'dependencies_html': jinja2.utils.Markup(dependencies_html),
-            'interaction_configs': (
-                interaction_registry.Registry.get_all_configs()),
             'interaction_templates': jinja2.utils.Markup(
                 interaction_templates),
+            'interaction_validators_html': jinja2.utils.Markup(
+                interaction_validators_html),
             'moderator_request_forum_url': MODERATOR_REQUEST_FORUM_URL.value,
             'nav_mode': feconf.NAV_MODE_CREATE,
-            'object_editors_js': jinja2.utils.Markup(object_editors_js),
             'value_generators_js': jinja2.utils.Markup(value_generators_js),
             'skin_js_urls': [
                 skins_services.Registry.get_skin_js_url(skin_id)
@@ -260,6 +229,8 @@ class ExplorationPage(EditorHandler):
             'skin_templates': jinja2.utils.Markup(skin_templates),
             'title': exploration.title,
             'ALL_LANGUAGE_CODES': feconf.ALL_LANGUAGE_CODES,
+            # This is needed for the exploration preview.
+            'CATEGORIES_TO_COLORS': feconf.CATEGORIES_TO_COLORS,
             'INVALID_PARAMETER_NAMES': feconf.INVALID_PARAMETER_NAMES,
             'NEW_STATE_TEMPLATE': NEW_STATE_TEMPLATE,
             'SHOW_SKIN_CHOOSER': feconf.SHOW_SKIN_CHOOSER,
@@ -283,34 +254,28 @@ class ExplorationHandler(EditorHandler):
 
         states = {}
         for state_name in exploration.states:
-            state_frontend_dict = exploration.export_state_to_frontend_dict(
-                state_name)
-            state_frontend_dict['unresolved_answers'] = (
+            state_dict = exploration.states[state_name].to_dict()
+            state_dict['unresolved_answers'] = (
                 stats_services.get_top_unresolved_answers_for_default_rule(
                     exploration_id, state_name))
-            states[state_name] = state_frontend_dict
+            states[state_name] = state_dict
 
         editor_dict = {
+            'category': exploration.category,
             'exploration_id': exploration_id,
             'init_state_name': exploration.init_state_name,
-            'category': exploration.category,
-            'objective': exploration.objective,
             'language_code': exploration.language_code,
-            'title': exploration.title,
-            'states': states,
+            'objective': exploration.objective,
             'param_changes': exploration.param_change_dicts,
             'param_specs': exploration.param_specs_dict,
-            'version': exploration.version,
             'rights': rights_manager.get_exploration_rights(
                 exploration_id).to_dict(),
             'show_state_editor_tutorial_on_load': (
                 self.user_id and not
                 self.user_has_started_state_editor_tutorial),
-            'ALL_INTERACTIONS': {
-                interaction.id: interaction.to_dict()
-                for interaction
-                in interaction_registry.Registry.get_all_interactions()
-            },
+            'states': states,
+            'title': exploration.title,
+            'version': exploration.version,
         }
 
         if feconf.SHOW_SKIN_CHOOSER:
@@ -487,13 +452,13 @@ class ExplorationRightsHandler(EditorHandler):
 
 
 class ResolvedAnswersHandler(EditorHandler):
-    """Allows readers' answers for a state to be marked as resolved."""
+    """Allows learners' answers for a state to be marked as resolved."""
 
     PAGE_NAME_FOR_CSRF = 'editor'
 
     @require_editor
     def put(self, exploration_id, state_name):
-        """Marks readers' answers as resolved."""
+        """Marks learners' answers as resolved."""
         resolved_answers = self.payload.get('resolved_answers')
 
         if not isinstance(resolved_answers, list):
@@ -654,12 +619,13 @@ class ExplorationStatsVersionsHandler(EditorHandler):
         except:
             raise self.PageNotFoundException
 
-        self.render_json({'versions': stats_services.get_versions_for_exploration_stats(
-            exploration_id)})
+        self.render_json({
+            'versions': stats_services.get_versions_for_exploration_stats(
+                exploration_id)})
 
 
 class StateRulesStatsHandler(EditorHandler):
-    """Returns detailed reader answer statistics for a state."""
+    """Returns detailed learner answer statistics for a state."""
 
     def get(self, exploration_id, escaped_state_name):
         """Handles GET requests."""

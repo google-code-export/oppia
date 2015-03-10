@@ -268,7 +268,6 @@ class ExplorationCreateAndDeleteUnitTests(ExplorationServicesUnitTests):
         with delete_docs_swap:
             exp_services.delete_exploration(self.OWNER_ID, self.EXP_ID)
 
-
     def test_create_new_exploration_error_cases(self):
         exploration = exp_domain.Exploration.create_default_exploration(
             self.EXP_ID, '', '')
@@ -281,7 +280,7 @@ class ExplorationCreateAndDeleteUnitTests(ExplorationServicesUnitTests):
             exp_services.save_new_exploration(self.OWNER_ID, exploration)
 
     def test_save_and_retrieve_exploration(self):
-        exploration = self.save_new_default_exploration(
+        exploration = self.save_new_valid_exploration(
             self.EXP_ID, self.OWNER_ID)
         exploration.param_specs = {
             'theParameter': param_domain.ParamSpec('Int')}
@@ -296,7 +295,7 @@ class ExplorationCreateAndDeleteUnitTests(ExplorationServicesUnitTests):
             retrieved_exploration.param_specs.keys()[0], 'theParameter')
 
     def test_save_and_retrieve_exploration_summary(self):
-        exploration = self.save_new_default_exploration(
+        exploration = self.save_new_valid_exploration(
             self.EXP_ID, self.OWNER_ID)
         exploration.param_specs = {
             'theParameter': param_domain.ParamSpec('Int')}
@@ -392,7 +391,6 @@ states:
           feedback: []
           param_changes: []
       id: TextInput
-      sticky: false
     param_changes: []
   New state:
     content:
@@ -413,7 +411,6 @@ states:
           feedback: []
           param_changes: []
       id: TextInput
-      sticky: false
     param_changes: []
 """ % (
     feconf.DEFAULT_INIT_STATE_NAME, feconf.DEFAULT_INIT_STATE_NAME,
@@ -452,7 +449,6 @@ states:
           feedback: []
           param_changes: []
       id: TextInput
-      sticky: false
     param_changes: []
   Renamed state:
     content:
@@ -473,7 +469,6 @@ states:
           feedback: []
           param_changes: []
       id: TextInput
-      sticky: false
     param_changes: []
 """ % (
     feconf.DEFAULT_INIT_STATE_NAME, feconf.DEFAULT_INIT_STATE_NAME,
@@ -481,10 +476,12 @@ states:
 
     def test_export_to_zip_file(self):
         """Test the export_to_zip_file() method."""
-        exploration = self.save_new_default_exploration(
-            self.EXP_ID, self.OWNER_ID)
+        exploration = self.save_new_valid_exploration(
+            self.EXP_ID, self.OWNER_ID, objective='The objective')
+        exploration.states[exploration.init_state_name].interaction.handlers[
+            0].rule_specs[0].dest = exploration.init_state_name
         exploration.add_states(['New state'])
-        exploration.objective = 'The objective'
+        exploration.states['New state'].update_interaction_id('TextInput')
         exp_services._save_exploration(self.OWNER_ID, exploration, '', [])
 
         zip_file_output = exp_services.export_to_zip_file(self.EXP_ID)
@@ -496,10 +493,12 @@ states:
 
     def test_export_to_zip_file_with_assets(self):
         """Test exporting an exploration with assets to a zip file."""
-        exploration = self.save_new_default_exploration(
-            self.EXP_ID, self.OWNER_ID)
+        exploration = self.save_new_valid_exploration(
+            self.EXP_ID, self.OWNER_ID, objective='The objective')
+        exploration.states[exploration.init_state_name].interaction.handlers[
+            0].rule_specs[0].dest = exploration.init_state_name
         exploration.add_states(['New state'])
-        exploration.objective = 'The objective'
+        exploration.states['New state'].update_interaction_id('TextInput')
         exp_services._save_exploration(self.OWNER_ID, exploration, '', [])
 
         with open(os.path.join(feconf.TESTS_DATA_DIR, 'img.png')) as f:
@@ -518,12 +517,14 @@ states:
 
     def test_export_by_versions(self):
         """Test export_to_zip_file() for different versions."""
-        exploration = self.save_new_default_exploration(
-            self.EXP_ID, self.OWNER_ID)
+        exploration = self.save_new_valid_exploration(
+            self.EXP_ID, self.OWNER_ID, objective='The objective')
         self.assertEqual(exploration.version, 1)
 
+        exploration.states[exploration.init_state_name].interaction.handlers[
+            0].rule_specs[0].dest = exploration.init_state_name
         exploration.add_states(['New state'])
-        exploration.objective = 'The objective'
+        exploration.states['New state'].update_interaction_id('TextInput')
         with open(os.path.join(feconf.TESTS_DATA_DIR, 'img.png')) as f:
             raw_image = f.read()
         fs = fs_domain.AbstractFileSystem(
@@ -576,7 +577,6 @@ interaction:
       feedback: []
       param_changes: []
   id: TextInput
-  sticky: false
 param_changes: []
 """) % (feconf.DEFAULT_INIT_STATE_NAME)
 
@@ -600,7 +600,6 @@ interaction:
       feedback: []
       param_changes: []
   id: TextInput
-  sticky: false
 param_changes: []
 """)
     }
@@ -625,17 +624,18 @@ interaction:
       feedback: []
       param_changes: []
   id: TextInput
-  sticky: false
 param_changes: []
 """)
     }
 
     def test_export_to_dict(self):
         """Test the export_to_dict() method."""
-        exploration = self.save_new_default_exploration(
-            self.EXP_ID, self.OWNER_ID)
+        exploration = self.save_new_valid_exploration(
+            self.EXP_ID, self.OWNER_ID, objective='The objective')
+        exploration.states[exploration.init_state_name].interaction.handlers[
+            0].rule_specs[0].dest = exploration.init_state_name
         exploration.add_states(['New state'])
-        exploration.objective = 'The objective'
+        exploration.states['New state'].update_interaction_id('TextInput')
         exp_services._save_exploration(self.OWNER_ID, exploration, '', [])
 
         dict_output = exp_services.export_states_to_yaml(self.EXP_ID, width=50)
@@ -644,11 +644,14 @@ param_changes: []
 
     def test_export_by_versions(self):
         """Test export_to_dict() for different versions."""
-        exploration = self.save_new_default_exploration(
+        exploration = self.save_new_valid_exploration(
             self.EXP_ID, self.OWNER_ID)
         self.assertEqual(exploration.version, 1)
 
+        exploration.states[exploration.init_state_name].interaction.handlers[
+            0].rule_specs[0].dest = exploration.init_state_name
         exploration.add_states(['New state'])
+        exploration.states['New state'].update_interaction_id('TextInput')
         exploration.objective = 'The objective'
         with open(os.path.join(feconf.TESTS_DATA_DIR, 'img.png')) as f:
             raw_image = f.read()
@@ -688,7 +691,7 @@ class UpdateStateTests(ExplorationServicesUnitTests):
 
     def setUp(self):
         super(UpdateStateTests, self).setUp()
-        exploration = self.save_new_default_exploration(
+        exploration = self.save_new_valid_exploration(
             self.EXP_ID, self.OWNER_ID)
 
         self.init_state_name = exploration.init_state_name
@@ -821,41 +824,13 @@ class UpdateStateTests(ExplorationServicesUnitTests):
             exploration.init_state.interaction.customization_args[
                 'choices']['value'], ['Option A', 'Option B'])
 
-    def test_update_interaction_sticky(self):
-        """Test updating of interaction_sticky."""
-        exp_services.update_exploration(
-            self.OWNER_ID, self.EXP_ID, _get_change_list(
-                self.init_state_name,
-                exp_domain.STATE_PROPERTY_INTERACTION_STICKY, False), '')
-
-        exploration = exp_services.get_exploration_by_id(self.EXP_ID)
-        self.assertEqual(exploration.init_state.interaction.sticky, False)
-
-        exp_services.update_exploration(
-            self.OWNER_ID, self.EXP_ID, _get_change_list(
-                self.init_state_name,
-                exp_domain.STATE_PROPERTY_INTERACTION_STICKY, True), '')
-
-        exploration = exp_services.get_exploration_by_id(self.EXP_ID)
-        self.assertEqual(exploration.init_state.interaction.sticky, True)
-
-    def test_update_interaction_sticky_type(self):
-        """Test for error if interaction_sticky is made non-Boolean."""
-        with self.assertRaisesRegexp(
-                utils.ValidationError,
-                'Expected interaction \'sticky\' flag to be a boolean, '
-                'received 3'):
-            exp_services.update_exploration(
-                self.OWNER_ID, self.EXP_ID, _get_change_list(
-                    self.init_state_name,
-                    exp_domain.STATE_PROPERTY_INTERACTION_STICKY, 3), '')
-
     def test_update_interaction_handlers(self):
         """Test updating of interaction_handlers."""
 
         # We create a second state to use as a rule destination
         exploration = exp_services.get_exploration_by_id(self.EXP_ID)
         exploration.add_states(['State 2'])
+        exploration.states['State 2'].update_interaction_id('TextInput')
         exp_services._save_exploration(self.OWNER_ID, exploration, '', [])
 
         exploration = exp_services.get_exploration_by_id(self.EXP_ID)
@@ -1221,6 +1196,7 @@ class ExplorationSnapshotUnitTests(ExplorationServicesUnitTests):
 
         exploration = exp_services.get_exploration_by_id(self.EXP_ID)
         exploration.add_states(['New state'])
+        exploration.states['New state'].update_interaction_id('TextInput')
         exp_services._save_exploration(
             'committer_id_2', exploration, 'Added new state', [])
 
@@ -1284,6 +1260,7 @@ class ExplorationSnapshotUnitTests(ExplorationServicesUnitTests):
         # In version 3, a new state is added.
         exploration = exp_services.get_exploration_by_id(self.EXP_ID)
         exploration.add_states(['New state'])
+        exploration.states['New state'].update_interaction_id('TextInput')
         exp_services._save_exploration(
             'committer_id_v3', exploration, 'Added new state', [])
 
@@ -1560,11 +1537,11 @@ class SearchTests(ExplorationServicesUnitTests):
     """Test exploration search."""
 
     def test_demo_explorations_are_added_to_search_index(self):
-        results, cursor = exp_services.search_explorations('Welcome')
+        results, cursor = exp_services.search_explorations('Welcome', 2)
         self.assertEqual(results, [])
 
         exp_services.load_demo('0')
-        results, cursor = exp_services.search_explorations('Welcome')
+        results, cursor = exp_services.search_explorations('Welcome', 2)
         self.assertEqual(results, ['0'])
 
     def test_index_explorations_given_ids(self):
@@ -1716,9 +1693,9 @@ class SearchTests(ExplorationServicesUnitTests):
 
         with self.swap(search_services, 'search', mock_search):
             result, cursor = exp_services.search_explorations(
-                query=expected_query_string,
+                expected_query_string,
+                expected_limit,
                 sort=expected_sort,
-                limit=expected_limit,
                 cursor=expected_cursor,
             )
 
@@ -1741,10 +1718,7 @@ class ExplorationChangedEventsTests(ExplorationServicesUnitTests):
             mock_record)
 
         with record_event_swap:
-            exploration = exp_domain.Exploration.create_default_exploration(
-                self.EXP_ID, 'title', 'category'
-            )
-            exp_services.save_new_exploration(self.OWNER_ID, exploration)
+            self.save_new_valid_exploration(self.EXP_ID, self.OWNER_ID)
             exp_services.update_exploration(self.OWNER_ID, self.EXP_ID, [], '')
 
         self.assertEqual(recorded_ids, [self.EXP_ID, self.EXP_ID])
@@ -1889,6 +1863,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
+                feconf.get_empty_ratings(),
                 rights_manager.EXPLORATION_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
@@ -1899,7 +1874,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
         self.assertEqual(actual_summaries.keys(),
                          expected_summaries.keys())
         simple_props = ['id', 'title', 'category', 'objective',
-                        'language_code', 'skill_tags', 'status',
+                        'language_code', 'skill_tags', 'ratings', 'status',
                         'community_owned', 'owner_ids',
                         'editor_ids', 'viewer_ids', 'version',
                         'exploration_model_created_on',
@@ -1916,6 +1891,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_1: exp_domain.ExplorationSummary(
                 self.EXP_ID_1, 'Exploration 1 title',
                 'A category', 'An objective', 'en', [],
+                feconf.get_empty_ratings(),
                 rights_manager.EXPLORATION_STATUS_PRIVATE,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_1,
                 actual_summaries[self.EXP_ID_1].exploration_model_created_on,
@@ -1924,6 +1900,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
+                feconf.get_empty_ratings(),
                 rights_manager.EXPLORATION_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
@@ -1935,7 +1912,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
         self.assertEqual(actual_summaries.keys(),
                          expected_summaries.keys())
         simple_props = ['id', 'title', 'category', 'objective',
-                        'language_code', 'skill_tags', 'status',
+                        'language_code', 'skill_tags', 'ratings', 'status',
                         'community_owned', 'owner_ids',
                         'editor_ids', 'viewer_ids', 'version',
                         'exploration_model_created_on',
@@ -1944,7 +1921,6 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             for prop in simple_props:
                 self.assertEqual(getattr(actual_summaries[exp_id], prop),
                                  getattr(expected_summaries[exp_id], prop))
-
 
     def test_get_private_at_least_viewable_exploration_summaries(self):
 
@@ -1956,6 +1932,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_1: exp_domain.ExplorationSummary(
                 self.EXP_ID_1, 'Exploration 1 title',
                 'A category', 'An objective', 'en', [],
+                feconf.get_empty_ratings(),
                 rights_manager.EXPLORATION_STATUS_PRIVATE,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_1,
                 actual_summaries[self.EXP_ID_1].exploration_model_created_on,
@@ -1966,7 +1943,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
         self.assertEqual(actual_summaries.keys(),
                          expected_summaries.keys())
         simple_props = ['id', 'title', 'category', 'objective',
-                        'language_code', 'skill_tags', 'status',
+                        'language_code', 'skill_tags', 'ratings', 'status',
                         'community_owned', 'owner_ids',
                         'editor_ids', 'viewer_ids', 'version',
                         'exploration_model_created_on',
@@ -1998,6 +1975,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
             self.EXP_ID_2: exp_domain.ExplorationSummary(
                 self.EXP_ID_2, 'Exploration 2 Albert title',
                 'A category', 'An objective', 'en', [],
+                feconf.get_empty_ratings(),
                 rights_manager.EXPLORATION_STATUS_PUBLIC,
                 False, [self.ALBERT_ID], [], [], self.EXPECTED_VERSION_2,
                 actual_summaries[self.EXP_ID_2].exploration_model_created_on,
@@ -2008,7 +1986,7 @@ class ExplorationSummaryGetTests(ExplorationServicesUnitTests):
         self.assertEqual(actual_summaries.keys(),
                          expected_summaries.keys())
         simple_props = ['id', 'title', 'category', 'objective',
-                        'language_code', 'skill_tags', 'status',
+                        'language_code', 'skill_tags', 'ratings','status',
                         'community_owned', 'owner_ids',
                         'editor_ids', 'viewer_ids', 'version',
                         'exploration_model_created_on',

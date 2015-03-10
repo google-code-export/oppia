@@ -48,15 +48,15 @@ oppia.factory('interactionDetailsCache', [function() {
 
 oppia.controller('StateInteraction', [
     '$scope', '$http', '$rootScope', '$modal', '$filter', 'warningsData',
-    'editorContextService', 'oppiaHtmlEscaper', 'interactionRepositoryService',
+    'editorContextService', 'oppiaHtmlEscaper', 'INTERACTION_SPECS',
     'stateInteractionIdService', 'stateCustomizationArgsService',
-    'stateInteractionStickyService', 'editabilityService',
-    'explorationStatesService', 'graphDataService', 'interactionDetailsCache',
+    'editabilityService', 'explorationStatesService', 'graphDataService',
+    'interactionDetailsCache',
     function($scope, $http, $rootScope, $modal, $filter, warningsData,
-      editorContextService, oppiaHtmlEscaper, interactionRepositoryService,
+      editorContextService, oppiaHtmlEscaper, INTERACTION_SPECS,
       stateInteractionIdService, stateCustomizationArgsService,
-      stateInteractionStickyService, editabilityService,
-      explorationStatesService, graphDataService, interactionDetailsCache) {
+      editabilityService, explorationStatesService, graphDataService,
+      interactionDetailsCache) {
 
   // Declare dummy submitAnswer() and adjustPageHeight() methods for the
   // interaction preview.
@@ -64,6 +64,15 @@ oppia.controller('StateInteraction', [
   $scope.adjustPageHeight = function(scroll) {};
 
   $scope.hasLoaded = false;
+
+  // TODO(sll): Build a file containing this data and serve it statically,
+  // since it rarely changes. (But don't cache it, since it does change.)
+  $scope.interactionRepository = INTERACTION_SPECS;
+
+  $scope.doesCurrentInteractionHaveCustomizations = function() {
+    var interactionSpec = $scope.interactionRepository[stateInteractionIdService.savedMemento];
+    return interactionSpec.customization_arg_specs.length > 0;
+  };
 
   var _getStateCustomizationArgsFromInteractionCustomizationArgs = function(interactionCustomizationArgs) {
     var result = {};
@@ -76,6 +85,10 @@ oppia.controller('StateInteraction', [
   };
 
   var _getInteractionPreviewTag = function(interactionCustomizationArgs) {
+    if (!stateInteractionIdService.savedMemento) {
+      return '';
+    }
+
     var el = $(
       '<oppia-interactive-' +
       $filter('camelCaseToHyphens')(stateInteractionIdService.savedMemento) + '/>');
@@ -92,53 +105,43 @@ oppia.controller('StateInteraction', [
 
     interactionDetailsCache.reset();
 
-    // TODO(sll): Build a file containing this data and serve it statically,
-    // since it rarely changes. (But don't cache it, since it does change.)
-    interactionRepositoryService.getInteractionRepository().then(function(interactionRepository) {
-      $scope.stateName = editorContextService.getActiveStateName();
-      $scope.interactionRepository = interactionRepository;
+    $scope.stateName = editorContextService.getActiveStateName();
 
-      $scope.topLevelInteractionIds = [];
-      $scope.interactionsByCategory = {};
-      for (var interactionId in $scope.interactionRepository) {
-        var category = $scope.interactionRepository[interactionId].category;
+    $scope.topLevelInteractionIds = [];
+    $scope.interactionsByCategory = {};
+    for (var interactionId in $scope.interactionRepository) {
+      var category = $scope.interactionRepository[interactionId].category;
 
-        if (category === '') {
-          $scope.topLevelInteractionIds.push(interactionId);
+      if (category === '') {
+        $scope.topLevelInteractionIds.push(interactionId);
+      } else {
+        if ($scope.interactionsByCategory.hasOwnProperty(category)) {
+          $scope.interactionsByCategory[category].push(interactionId);
         } else {
-          if ($scope.interactionsByCategory.hasOwnProperty(category)) {
-            $scope.interactionsByCategory[category].push(interactionId);
-          } else {
-            $scope.interactionsByCategory[category] = [interactionId];
-          }
+          $scope.interactionsByCategory[category] = [interactionId];
         }
       }
+    }
 
-      $scope.topLevelInteractionIds.sort();
-      for (var category in $scope.interactionsByCategory) {
-        $scope.interactionsByCategory[category].sort();
-      }
+    $scope.topLevelInteractionIds.sort();
+    for (var category in $scope.interactionsByCategory) {
+      $scope.interactionsByCategory[category].sort();
+    }
 
-      stateInteractionIdService.init(
-        $scope.stateName, stateData.interaction.id,
-        stateData.interaction, 'widget_id');
-      stateCustomizationArgsService.init(
-        $scope.stateName, stateData.interaction.customization_args,
-        stateData.interaction, 'widget_customization_args');
-      stateInteractionStickyService.init(
-        $scope.stateName, stateData.interaction.sticky,
-        stateData.interaction, 'widget_sticky');
+    stateInteractionIdService.init(
+      $scope.stateName, stateData.interaction.id,
+      stateData.interaction, 'widget_id');
+    stateCustomizationArgsService.init(
+      $scope.stateName, stateData.interaction.customization_args,
+      stateData.interaction, 'widget_customization_args');
 
-      $scope.stateInteractionStickyService = stateInteractionStickyService;
-
-      $rootScope.$broadcast('initializeHandlers', {
-        'interactionId': stateData.interaction.id,
-        'handlers': stateData.interaction.handlers
-      });
-
-      _updateInteractionPreviewAndAnswerChoices();
-      $scope.hasLoaded = true;
+    $rootScope.$broadcast('initializeHandlers', {
+      'interactionId': stateData.interaction.id,
+      'handlers': stateData.interaction.handlers
     });
+
+    _updateInteractionPreviewAndAnswerChoices();
+    $scope.hasLoaded = true;
   });
 
   $scope.openInteractionCustomizerModal = function() {
@@ -218,10 +221,10 @@ oppia.controller('StateInteraction', [
     } else if ($scope.interactionId === 'ImageClickInput') {
       var _answerChoices = [];
       var imageWithRegions = currentCustomizationArgs['imageAndRegions'].value;
-      for (var j = 0; j < imageWithRegions.imageRegions.length; j++) {
+      for (var j = 0; j < imageWithRegions.labeledRegions.length; j++) {
         _answerChoices.push({
-          val: imageWithRegions.imageRegions[j].label,
-          label: imageWithRegions.imageRegions[j].label
+          val: imageWithRegions.labeledRegions[j].label,
+          label: imageWithRegions.labeledRegions[j].label
         });
       }
 
@@ -238,8 +241,6 @@ oppia.controller('StateInteraction', [
       stateInteractionIdService.savedMemento);
     _stateDict.interaction.customization_args = angular.copy(
       stateCustomizationArgsService.savedMemento);
-    _stateDict.interaction.sticky = angular.copy(
-      stateInteractionStickyService.savedMemento);
     explorationStatesService.setState(activeStateName, _stateDict);
   };
 

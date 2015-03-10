@@ -140,14 +140,22 @@ urls = [
     get_redirect_route(r'/_ah/warmup', WarmupHandler, 'warmup_handler'),
 
     get_redirect_route(
-        r'/dashboard', home.DashboardPage, 'dashboard_page'),
+        r'/timeline', home.TimelinePage, 'timeline_page'),
     get_redirect_route(
-        r'/dashboardhandler/data', home.DashboardHandler,
-        'dashboard_handler'),
+        r'/timelinehandler/data', home.TimelineHandler,
+        'timeline_handler'),
+    get_redirect_route(
+        r'/my_explorations', home.MyExplorationsPage, 'my_explorations_page'),
+    get_redirect_route(
+        r'/myexplorationshandler/data', home.MyExplorationsHandler,
+        'my_explorations_handler'),
 
     get_redirect_route(r'/about', pages.AboutPage, 'about_page'),
     get_redirect_route(
-        r'/site_guidelines', pages.AboutPage, 'redirect_to_about_page'),
+        r'/participate', pages.ParticipatePage, 'participate_page'),
+    get_redirect_route(
+        r'/site_guidelines', pages.ParticipatePage,
+        'redirect_to_participate_page'),
     get_redirect_route(
         r'/contact', pages.AboutPage, 'redirect_to_about_page'),
 
@@ -167,14 +175,6 @@ urls = [
     get_redirect_route(
         r'/value_generator_handler/<generator_id>',
         resources.ValueGeneratorHandler, 'value_generator_handler'),
-    get_redirect_route(
-        r'/interaction_repository/data',
-        resources.InteractionRepositoryHandler,
-        'interaction_repository_handler'),
-    get_redirect_route(
-        r'/rich_text_component_repository/data',
-        resources.RteComponentRepositoryHandler,
-        'rte_component_repository_handler'),
 
     get_redirect_route(r'/', galleries.GalleryPage, 'gallery_page'),
     get_redirect_route(
@@ -209,6 +209,9 @@ urls = [
     get_redirect_route(
         r'/preferenceshandler/data', profile.PreferencesHandler,
         'preferences_handler'),
+    get_redirect_route(
+        r'/preferenceshandler/profile_picture', profile.ProfilePictureHandler,
+        'profle_picture_handler'),
     get_redirect_route(
         r'%s' % feconf.SIGNUP_URL, profile.SignupPage, 'signup_page'),
     get_redirect_route(
@@ -249,6 +252,9 @@ urls = [
     get_redirect_route(
         r'/explorehandler/classify/<exploration_id>', reader.ClassifyHandler,
         'reader_classify_handler'),
+    get_redirect_route(
+        r'/explorehandler/rating/<exploration_id>',
+        reader.RatingHandler, 'rating_handler'),
 
     get_redirect_route(
         r'%s/<exploration_id>' % feconf.EDITOR_URL_PREFIX,

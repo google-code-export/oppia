@@ -36,11 +36,10 @@ oppia.directive('conversationSkin', [function() {
       var hasInteractedAtLeastOnce = false;
       var _labelForNextFocusTarget = null;
       var _answerIsBeingProcessed = false;
-      $scope.isAnswerBeingProcessed = function() {
-        return _answerIsBeingProcessed;
-      };
+      var _learnerInputIsInView = false;
 
       $scope.isInPreviewMode = oppiaPlayerService.isInPreviewMode();
+      $scope.introCardImageUrl = null;
 
       $rootScope.loadingMessage = 'Loading';
 
@@ -51,22 +50,21 @@ oppia.directive('conversationSkin', [function() {
       $scope.adjustPageHeight = function(scroll, callback) {
         $timeout(function() {
           var newHeight = document.body.scrollHeight;
-          if (Math.abs($scope.lastRequestedHeight - newHeight) <= 50.5 &&
-              (!scroll || $scope.lastRequestedScroll)) {
-            return;
+          if (Math.abs($scope.lastRequestedHeight - newHeight) > 50.5 ||
+              (scroll && !$scope.lastRequestedScroll)) {
+            // Sometimes setting iframe height to the exact content height still
+            // produces scrollbar, so adding 50 extra px.
+            newHeight += 50;
+            messengerService.sendMessage(messengerService.HEIGHT_CHANGE,
+              {height: newHeight, scroll: scroll});
+            $scope.lastRequestedHeight = newHeight;
+            $scope.lastRequestedScroll = scroll;
           }
-          // Sometimes setting iframe height to the exact content height still
-          // produces scrollbar, so adding 50 extra px.
-          newHeight += 50;
-          messengerService.sendMessage(messengerService.HEIGHT_CHANGE,
-            {height: newHeight, scroll: scroll});
-          $scope.lastRequestedHeight = newHeight;
-          $scope.lastRequestedScroll = scroll;
 
           if (callback) {
             callback();
           }
-        }, 500);
+        }, 100);
       };
 
       $window.addEventListener('beforeunload', function(e) {
@@ -89,16 +87,32 @@ oppia.directive('conversationSkin', [function() {
         }
       };
 
-      var _scrollToLastEntry = function(postScrollCallback) {
-        var lastEntryEls = document.getElementsByClassName(
-          'conversation-skin-last-log-entry');
+      var _scrollToBottom = function(postScrollCallback) {
         $scope.adjustPageHeight(true, function() {
-          if (lastEntryEls.length > 0) {
-            // TODO(sll): Try and drop this in favor of an Angular-based solution.
-            $('html, body, iframe').animate(
-              {'scrollTop': $(document).height() - $(window).height() - 80}, 1000, 'easeOutQuad',
-              postScrollCallback);
+          var oppiaLastContentHeight = $('.conversation-skin-oppia-output:last')
+            .offset().top;
+          var newScrollTop = null;
+          if ($(document).height() - oppiaLastContentHeight - 60 <=
+              $(window).height() * 0.4) {
+            // The -60 prevents the attribution guide from being scrolled into view.
+            newScrollTop = $(document).height() - $(window).height() - 60;
+            _learnerInputIsInView = true;
+          } else {
+            newScrollTop = oppiaLastContentHeight - $(window).height() * 0.4;
+            _learnerInputIsInView = false;
           }
+
+          // Do not scroll up.
+          // This occurs if Oppia gives no feedback for (e.g.) a supplemental
+          // interaction. This leads to a scroll *up* to Oppia's last output,
+          // which is rather disconcerting.
+          if ($(document).scrollTop() >= newScrollTop) {
+            newScrollTop = $(document).scrollTop();
+          }
+
+          $('html, body, iframe').animate({
+            'scrollTop': newScrollTop
+          }, 1000, 'easeOutQuad').promise().done(postScrollCallback);
         });
       };
 
@@ -114,14 +128,18 @@ oppia.directive('conversationSkin', [function() {
         $scope.allResponseStates = [];
         $scope.inputTemplate = '';
         $scope.interactionIsInline = false;
-        // Temporary storage for the next card's content. This is not null iff a 'next card'
-        // exists. (As soon as the feedback for the 'current card' is displayed, the user
-        // gets 2 seconds to read it and then the 'next card' is shown.)
-        $scope.contentToDisplayNext = null;
+        $scope.waitingForOppiaFeedback = false;
+        $scope.waitingForNewCard = false;
 
-        oppiaPlayerService.init(function(stateName, initHtml, hasEditingRights) {
+        oppiaPlayerService.init(function(stateName, initHtml, hasEditingRights, introCardImageUrl) {
           $scope.explorationId = oppiaPlayerService.getExplorationId();
           $scope.explorationTitle = oppiaPlayerService.getExplorationTitle();
+          $scope.introCardImageUrl = introCardImageUrl;
+          oppiaPlayerService.getUserProfileImage().then(function(result) {
+            // $scope.profilePicture contains a dataURI representation of the
+            // user-uploaded profile image, or the path to the default image.
+            $scope.profilePicture = result;
+          });
           hasInteractedAtLeastOnce = false;
           $scope.finished = false;
           $scope.hasEditingRights = hasEditingRights;
@@ -142,12 +160,15 @@ oppia.directive('conversationSkin', [function() {
           $scope.adjustPageHeight(false, null);
           $window.scrollTo(0, 0);
 
-          $scope.contentToDisplayNext = initHtml;
+          $scope.waitingForNewCard = true;
+
           $timeout(function() {
-            _addNewCard($scope.stateName, $scope.contentToDisplayNext);
-            $scope.contentToDisplayNext = null;
-            _scrollToLastEntry(function() {
-              focusService.setFocus(_labelForNextFocusTarget);
+            _addNewCard($scope.stateName, initHtml);
+            $scope.waitingForNewCard = false;
+            _scrollToBottom(function() {
+              if (_learnerInputIsInView) {
+                focusService.setFocus(_labelForNextFocusTarget);
+              }
             });
           }, 1000);
         });
@@ -169,15 +190,24 @@ oppia.directive('conversationSkin', [function() {
           oppiaFeedback: ''
         });
 
+        $scope.waitingForOppiaFeedback = true;
+
         oppiaPlayerService.submitAnswer(answer, handler, function(
-            newStateName, isSticky, feedbackHtml, questionHtml, newInteractionId) {
+            newStateName, refreshInteraction, feedbackHtml, questionHtml, newInteractionId) {
           $timeout(function() {
             var oldStateName = $scope.stateName;
             $scope.stateName = newStateName;
-            $scope.finished = oppiaPlayerService.isStateTerminal(newStateName);
 
-            if ($scope.stateName && !isSticky) {
-              // The previous interaction is not sticky and should be replaced.
+            $scope.finished = oppiaPlayerService.isStateTerminal(newStateName);
+            if ($scope.finished) {
+              messengerService.sendMessage(
+                messengerService.EXPLORATION_COMPLETED, null);
+            }
+
+            if (!newStateName) {
+              $scope.inputTemplate = '';
+            } else if (newStateName && refreshInteraction) {
+              // The previous interaction should be replaced.
               _labelForNextFocusTarget = Math.random().toString(36).slice(2);
               $scope.inputTemplate = oppiaPlayerService.getInteractionHtml(
                 newStateName, _labelForNextFocusTarget) + oppiaPlayerService.getRandomSuffix();
@@ -188,35 +218,41 @@ oppia.directive('conversationSkin', [function() {
             var pairs = $scope.allResponseStates[$scope.allResponseStates.length - 1].answerFeedbackPairs;
             pairs[pairs.length - 1].oppiaFeedback = feedbackHtml;
 
-            // If there is a change in state, use a new card.
-            if (oldStateName !== newStateName) {
-              // Scroll down so that the user can see the feedback, then pause for 2000ms
-              // (so that the user can read the feedback) before showing the next card.
+            if (oldStateName === newStateName) {
+              $scope.waitingForOppiaFeedback = false;
+              _scrollToBottom(function() {
+                if (_learnerInputIsInView) {
+                  focusService.setFocus(_labelForNextFocusTarget);
+                }
+                _answerIsBeingProcessed = false;
+              });
+            } else {
               if (feedbackHtml) {
-                $scope.contentToDisplayNext = questionHtml;
-                _scrollToLastEntry();
-
-                $timeout(function() {
-                  _addNewCard($scope.stateName, $scope.contentToDisplayNext);
-                  _scrollToLastEntry(function() {
-                    focusService.setFocus(_labelForNextFocusTarget);
-                  });
-                  $scope.contentToDisplayNext = null;
-                }, 2000);
+                $scope.waitingForOppiaFeedback = false;
+                $scope.waitingForNewCard = true;
+                _scrollToBottom(function() {
+                  $timeout(function() {
+                    $scope.waitingForNewCard = false;
+                    _addNewCard($scope.stateName, questionHtml);
+                    _scrollToBottom(function() {
+                      if (_learnerInputIsInView) {
+                        focusService.setFocus(_labelForNextFocusTarget);
+                      }
+                      _answerIsBeingProcessed = false;
+                    });
+                  }, 1000);
+                });
               } else {
+                $scope.waitingForOppiaFeedback = false;
                 _addNewCard($scope.stateName, questionHtml);
-                _scrollToLastEntry();
+                _scrollToBottom(function() {
+                  if (_learnerInputIsInView) {
+                    focusService.setFocus(_labelForNextFocusTarget);
+                  }
+                  _answerIsBeingProcessed = false;
+                });
               }
             }
-
-            if ($scope.finished) {
-              messengerService.sendMessage(
-                messengerService.EXPLORATION_COMPLETED, null);
-            }
-            _answerIsBeingProcessed = false;
-            _scrollToLastEntry(function() {
-              focusService.setFocus(_labelForNextFocusTarget);
-            });
           }, 1000);
         });
       };

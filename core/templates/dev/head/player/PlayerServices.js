@@ -18,6 +18,9 @@
  * @author sll@google.com (Sean Lip)
  */
 
+// The conditioning on window.GLOBALS is because Karma does not appear to see GLOBALS.
+oppia.constant('INTERACTION_SPECS', window.GLOBALS ? GLOBALS.INTERACTION_SPECS : {});
+
 // A simple service that provides stopwatch instances. Each stopwatch can be
 // independently reset and queried for the current time.
 oppia.factory('stopwatchProviderService', ['$log', function($log) {
@@ -116,15 +119,19 @@ oppia.factory('answerClassificationService', [
 // and audit it to ensure it behaves differently for learner mode and editor
 // mode. Add tests to ensure this.
 oppia.factory('oppiaPlayerService', [
-    '$http', '$rootScope', '$modal', '$filter', 'messengerService',
+    '$http', '$rootScope', '$modal', '$filter', '$q', 'messengerService',
     'stopwatchProviderService', 'learnerParamsService', 'warningsData',
     'oppiaHtmlEscaper', 'answerClassificationService', 'stateTransitionService',
+    'INTERACTION_SPECS',
     function(
-      $http, $rootScope, $modal, $filter, messengerService,
+      $http, $rootScope, $modal, $filter, $q, messengerService,
       stopwatchProviderService, learnerParamsService, warningsData,
-      oppiaHtmlEscaper, answerClassificationService, stateTransitionService) {
+      oppiaHtmlEscaper, answerClassificationService, stateTransitionService,
+      INTERACTION_SPECS) {
   var _END_DEST = 'END';
   var _INTERACTION_DISPLAY_MODE_INLINE = 'inline';
+  var _NULL_INTERACTION_HTML = (
+    '<span style="color: red;"><strong>Error</strong>: No interaction specified.</span>');
 
   // Note that both of these do not get set for the Karma unit tests.
   var _explorationId = null;
@@ -144,6 +151,8 @@ oppia.factory('oppiaPlayerService', [
       break;
     }
   }
+
+  var _introCardImageUrl = null;
 
   // The following line is needed for image displaying to work, since the image
   // URLs refer to $rootScope.explorationId.
@@ -172,6 +181,10 @@ oppia.factory('oppiaPlayerService', [
   // TODO(sll): Move this (and the corresponding code in the exploration editor) to
   // a common standalone service.
   var _getInteractionHtml = function(interactionId, interactionCustomizationArgSpecs, labelForFocusTarget) {
+    if (!interactionId) {
+      return _NULL_INTERACTION_HTML;
+    }
+
     var el = $(
       '<oppia-interactive-' + $filter('camelCaseToHyphens')(interactionId) + '>');
 
@@ -192,35 +205,16 @@ oppia.factory('oppiaPlayerService', [
 
   var stopwatch = stopwatchProviderService.getInstance();
 
-  var _isInteractionSticky = function(newStateName, oldStateName) {
-    var oldStateData = _exploration.states[oldStateName];
-    // NB: This may be undefined if newStateName === END_DEST.
-    var newStateData = _exploration.states[newStateName];
-
-    // TODO(sll): If the new interaction is the same as the old interaction,
-    // and the new interaction is sticky, do not render the reader response.
-    // The interaction in the frontend should take care of this.
-    // TODO(sll): This special-casing is not great; we should make the
-    // interface for updating the frontend more generic so that all the updates
-    // happen in the same place. Perhaps in the non-sticky case we should call
-    // a frontend method named appendFeedback() or similar.
-    return (
-      newStateName && newStateData.interaction.sticky &&
-      newStateData.interaction.id === oldStateData.interaction.id);
-  };
-
   var _onStateTransitionProcessed = function(
       newStateName, newParams, newQuestionHtml, newFeedbackHtml, answer,
       handler, successCallback) {
     var oldStateName = _currentStateName;
-    // TODO(sll): If the new interaction is the same as the old interaction,
-    // and the new interaction is sticky, do not render the reader response.
-    // The interaction in the frontend should take care of this.
-    // TODO(sll): This special-casing is not great; we should make the
-    // interface for updating the frontend more generic so that all the updates
-    // happen in the same place. Perhaps in the non-sticky case we should call
-    // a frontend method named appendFeedback() or similar.
-    var isSticky = _isInteractionSticky(newStateName, oldStateName);
+    var oldStateInteractionId = _exploration.states[oldStateName].interaction.id;
+
+    var refreshInteraction = (
+      oldStateName !== newStateName ||
+      INTERACTION_SPECS[oldStateInteractionId].display_mode ===
+        _INTERACTION_DISPLAY_MODE_INLINE);
 
     if (!_editorPreviewMode) {
       // Record the state hit to the event handler.
@@ -256,7 +250,7 @@ oppia.factory('oppiaPlayerService', [
     $rootScope.$broadcast('playerStateChange');
 
     successCallback(
-      newStateName, isSticky, newFeedbackHtml,
+      newStateName, refreshInteraction, newFeedbackHtml,
       newQuestionHtml, newInteractionId);
   };
 
@@ -264,7 +258,7 @@ oppia.factory('oppiaPlayerService', [
     stopwatch.resetStopwatch();
     _updateStatus(newParams, initStateName);
     $rootScope.$broadcast('playerStateChange');
-    callback(initStateName, initHtml, _viewerHasEditingRights);
+    callback(initStateName, initHtml, _viewerHasEditingRights, _introCardImageUrl);
   };
 
   // This should only be called when _exploration is non-null.
@@ -333,11 +327,16 @@ oppia.factory('oppiaPlayerService', [
 
       if (_editorPreviewMode) {
         if (_exploration) {
+          _introCardImageUrl = (
+            '/images/gallery/exploration_background_' +
+            (GLOBALS.CATEGORIES_TO_COLORS[_exploration.category] || 'teal') +
+            '_large.png');
           _loadInitialState(successCallback);
         }
       } else {
         $http.get(explorationDataUrl).success(function(data) {
           _exploration = data.exploration;
+          _introCardImageUrl = data.intro_card_image_url;
           version = data.version,
           _isLoggedIn = data.is_logged_in;
           sessionId = data.session_id;
@@ -365,12 +364,14 @@ oppia.factory('oppiaPlayerService', [
         labelForFocusTarget);
     },
     isInteractionInline: function(stateName) {
-      return GLOBALS.interactionConfigs[
-        _exploration.states[stateName].interaction.id
-      ].display_mode === _INTERACTION_DISPLAY_MODE_INLINE;
+      var interactionId = _exploration.states[stateName].interaction.id;
+      return (
+        interactionId &&
+        INTERACTION_SPECS[interactionId].display_mode ===
+          _INTERACTION_DISPLAY_MODE_INLINE);
     },
     isStateTerminal: function(stateName) {
-      return !stateName || GLOBALS.interactionConfigs[
+      return !stateName || INTERACTION_SPECS[
         _exploration.states[stateName].interaction.id].is_terminal;
     },
     getRandomSuffix: function() {
@@ -525,6 +526,26 @@ oppia.factory('oppiaPlayerService', [
         }
       });
     },
+    // Returns a promise for the user profile picture, or the default image if
+    // user is not logged in or has not uploaded a profile picture, or the
+    // player is in preview mode.
+    getUserProfileImage: function() {
+      var DEFAULT_PROFILE_IMAGE_PATH = '/images/general/user_mint_48px.png';
+      var deferred = $q.defer();
+      if (_isLoggedIn && !_editorPreviewMode) {
+        $http.get('/preferenceshandler/profile_picture').success(function(data) {
+          var profilePictureDataUrl = data.profile_picture_data_url;
+          if (profilePictureDataUrl) {
+            deferred.resolve(profilePictureDataUrl);
+          } else {
+            deferred.resolve(DEFAULT_PROFILE_IMAGE_PATH);
+          }
+        });
+      } else {
+        deferred.resolve(DEFAULT_PROFILE_IMAGE_PATH);
+      }
+      return deferred.promise;
+    }
   };
 }]);
 

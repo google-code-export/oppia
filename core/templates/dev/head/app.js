@@ -25,7 +25,7 @@
 var oppia = angular.module(
   'oppia', [
     'ngMaterial', 'ngAnimate', 'ngSanitize', 'ngResource', 'ui.bootstrap',
-    'ui.sortable', 'infinite-scroll', 'ngJoyRide', 'ngImgCrop'
+    'ui.sortable', 'infinite-scroll', 'ngJoyRide', 'ngImgCrop', 'ui.validate'
   ].concat(
     window.GLOBALS ? (window.GLOBALS.ADDITIONAL_ANGULAR_MODULES || [])
                    : []));
@@ -281,53 +281,6 @@ oppia.factory('focusService', ['$rootScope', '$timeout', function($rootScope, $t
   };
 }]);
 
-// Service for caching RTE component definitions.
-oppia.factory('rteComponentRepositoryService', [
-    '$http', '$log', '$q', function($http, $log, $q) {
-  var _cachedRteComponentRepository = null;
-
-  return {
-    // Returns a promise, caching the results.
-    getRteComponentRepository: function() {
-      if (_cachedRteComponentRepository) {
-        var deferred = $q.defer();
-        deferred.resolve(angular.copy(_cachedRteComponentRepository));
-        return deferred.promise;
-      } else {
-        return $http.get('/rich_text_component_repository/data').then(function(response) {
-          _cachedRteComponentRepository = response.data.repository;
-          return angular.copy(_cachedRteComponentRepository);
-        });
-      }
-    }
-  };
-}]);
-
-oppia.factory('interactionRepositoryService', [
-    '$http', '$log', '$q', function($http, $log, $q) {
-  var _cachedInteractionRepository = null;
-
-  return {
-    // Returns a promise, caching the results.
-    getInteractionRepository: function() {
-      if (_cachedInteractionRepository) {
-        var deferred = $q.defer();
-        deferred.resolve(angular.copy(_cachedInteractionRepository));
-        return deferred.promise;
-      } else {
-        return $http.get('/interaction_repository/data').then(function(response) {
-          _cachedInteractionRepository = response.data.repository;
-          return angular.copy(_cachedInteractionRepository);
-        });
-      }
-    },
-    // This is used in the ExplorationEditor in order to prevent a second
-    // RPC to the backend.
-    setInteractionRepository: function(interactionRepository) {
-      _cachedInteractionRepository = interactionRepository;
-    }
-  };
-}]);
 
 // Service for manipulating the page URL.
 oppia.factory('urlService', ['$window', function($window) {

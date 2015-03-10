@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Controllers for the splash page and user dashboard."""
+"""Controllers for the user dashboard and for notifications."""
 
 __author__ = 'sll@google.com (Sean Lip)'
 
@@ -26,23 +26,8 @@ import feconf
 import utils
 
 
-SPLASH_PAGE_EXPLORATION_ID = config_domain.ConfigProperty(
-    'splash_page_exploration_id', 'UnicodeString',
-    ('The id for the exploration on the splash page '
-     '(a blank value indicates that no exploration should be displayed)'),
-    default_value='')
-SPLASH_PAGE_EXPLORATION_VERSION = config_domain.ConfigProperty(
-    'splash_page_exploration_version', 'UnicodeString',
-    ('The version number for the exploration on the splash page '
-     '(a blank value indicates that the latest version should be used)'),
-    default_value='')
-
-
-class DashboardPage(base.BaseHandler):
-    """Page for the user's dashboard."""
-    # We use 'gallery' because the createExploration() modal makes a call
-    # there.
-    PAGE_NAME_FOR_CSRF = 'gallery'
+class TimelinePage(base.BaseHandler):
+    """Page with timeline updates for the user."""
 
     @base.require_user
     def get(self):
@@ -54,14 +39,18 @@ class DashboardPage(base.BaseHandler):
                 'nav_mode': feconf.NAV_MODE_HOME,
             })
             self.render_template(
-                'dashboard/dashboard.html', redirect_url_on_logout='/')
+                'dashboard/timeline.html', redirect_url_on_logout='/')
         else:
             self.redirect(utils.set_url_query_parameter(
-                feconf.SIGNUP_URL, 'return_url', '/dashboard'))
+                feconf.SIGNUP_URL, 'return_url', '/timeline'))
 
 
-class DashboardHandler(base.BaseHandler):
-    """Provides data for the user dashboard."""
+class TimelineHandler(base.BaseHandler):
+    """Provides data for the user timeline."""
+
+    # We use 'gallery' because the createExploration() modal makes a call
+    # there.
+    PAGE_NAME_FOR_CSRF = 'gallery'
 
     def get(self):
         """Handles GET requests."""
@@ -95,30 +84,75 @@ class DashboardHandler(base.BaseHandler):
         subscription_services.record_user_has_seen_notifications(
             self.user_id, job_queued_msec if job_queued_msec else 0.0)
 
-        editable_exp_summaries = (
-            exp_services.get_at_least_editable_exploration_summaries(
-                self.user_id))
-
         self.values.update({
-            'explorations': {
-                exp_summary.id: {
-                    'title': exp_summary.title,
-                    'category': exp_summary.category,
-                    'objective': exp_summary.objective,
-                    'language_code': exp_summary.language_code,
-                    'last_updated': utils.get_time_in_millisecs(
-                        exp_summary.exploration_model_last_updated),
-                    'status': exp_summary.status,
-                    'community_owned': exp_summary.community_owned,
-                    'is_editable': True,
-                } for exp_summary in editable_exp_summaries.values()
-            },
             # This may be None if no job has ever run for this user.
             'job_queued_msec': job_queued_msec,
             # This may be None if this is the first time the user has seen
             # the dashboard.
             'last_seen_msec': last_seen_msec,
             'recent_updates': recent_updates,
+        })
+        self.render_json(self.values)
+
+
+class MyExplorationsPage(base.BaseHandler):
+    """Page showing the user's explorations."""
+    # We use 'gallery' because the createExploration() modal makes a call
+    # there.
+    PAGE_NAME_FOR_CSRF = 'gallery'
+
+    @base.require_user
+    def get(self):
+        if self.username in config_domain.BANNED_USERNAMES.value:
+            raise self.UnauthorizedUserException(
+                'You do not have the credentials to access this page.')
+        elif user_services.has_user_registered_as_editor(self.user_id):
+            self.values.update({
+                'nav_mode': feconf.NAV_MODE_HOME,
+            })
+            self.render_template(
+                'dashboard/my_explorations.html', redirect_url_on_logout='/')
+        else:
+            self.redirect(utils.set_url_query_parameter(
+                feconf.SIGNUP_URL, 'return_url', '/my_explorations'))
+
+
+class MyExplorationsHandler(base.BaseHandler):
+    """Provides data for the user's explorations page."""
+
+    def get(self):
+        """Handles GET requests."""
+        if self.user_id is None:
+            raise self.PageNotFoundException
+
+        editable_exp_summaries = (
+            exp_services.get_at_least_editable_exploration_summaries(
+                self.user_id))
+
+        def _get_intro_card_color(category):
+            return (
+                feconf.CATEGORIES_TO_COLORS[category] if
+                category in feconf.CATEGORIES_TO_COLORS else
+                feconf.DEFAULT_COLOR)
+
+        self.values.update({
+            'explorations_list': [{
+                'id': exp_summary.id,
+                'title': exp_summary.title,
+                'category': exp_summary.category,
+                'objective': exp_summary.objective,
+                'language_code': exp_summary.language_code,
+                'last_updated': utils.get_time_in_millisecs(
+                    exp_summary.exploration_model_last_updated),
+                'created_on': utils.get_time_in_millisecs(
+                    exp_summary.exploration_model_created_on),
+                'status': exp_summary.status,
+                'community_owned': exp_summary.community_owned,
+                'is_editable': True,
+                'thumbnail_image_url': (
+                    '/images/gallery/exploration_background_%s_small.png' %
+                    _get_intro_card_color(exp_summary.category)),
+            } for exp_summary in editable_exp_summaries.values()],
         })
         self.render_json(self.values)
 

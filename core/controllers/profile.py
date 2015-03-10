@@ -18,17 +18,9 @@ __author__ = 'sfederwisch@google.com (Stephanie Federwisch)'
 
 from core.controllers import base
 from core.controllers import pages
-from core.domain import config_domain
 from core.domain import user_services
 import feconf
 import utils
-
-
-EDITOR_PREREQUISITES_AGREEMENT = config_domain.ConfigProperty(
-    'editor_prerequisites_agreement', 'Html',
-    'The agreement that editors are asked to accept before making any '
-    'contributions.',
-    default_value=feconf.DEFAULT_EDITOR_PREREQUISITES_AGREEMENT)
 
 
 def require_user_id_else_redirect_to_homepage(handler):
@@ -120,6 +112,20 @@ class PreferencesHandler(base.BaseHandler):
         else:
             raise self.InvalidInputException(
                 'Invalid update type: %s' % update_type)
+
+
+class ProfilePictureHandler(base.BaseHandler):
+    """Provides the dataURI of the user's profile picture, or none if no user
+    picture is uploaded."""
+
+    @base.require_user
+    def get(self):
+        """Handles GET requests."""
+        user_settings = user_services.get_user_settings(self.user_id)
+        self.values.update({
+            'profile_picture_data_url': user_settings.profile_picture_data_url
+        })
+        self.render_json(self.values)
 
 
 class SignupPage(base.BaseHandler):

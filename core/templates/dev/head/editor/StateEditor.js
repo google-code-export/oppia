@@ -20,10 +20,10 @@
 
 oppia.controller('StateEditor', [
   '$scope', '$rootScope', 'editorContextService', 'changeListService',
-  'editabilityService', 'explorationStatesService',
+  'editabilityService', 'explorationStatesService', 'INTERACTION_SPECS',
   function(
     $scope, $rootScope, editorContextService, changeListService,
-    editabilityService, explorationStatesService) {
+    editabilityService, explorationStatesService, INTERACTION_SPECS) {
 
   $scope.STATE_CONTENT_SCHEMA = {
     type: 'html',
@@ -33,14 +33,17 @@ oppia.controller('StateEditor', [
   };
 
   $scope.isCurrentStateTerminal = false;
+  $scope.isInteractionIdSet = false;
 
   $scope.$on('refreshStateEditor', function() {
     $scope.initStateEditor();
   });
 
   $scope.$on('onInteractionIdChanged', function(evt, newInteractionId) {
-    $scope.isCurrentStateTerminal = GLOBALS.interactionConfigs[
-      newInteractionId].is_terminal;
+    $scope.isInteractionIdSet = Boolean(newInteractionId);
+    $scope.isCurrentStateTerminal = (
+      $scope.isInteractionIdSet && INTERACTION_SPECS[
+        newInteractionId].is_terminal);
   });
 
   $scope.initStateEditor = function() {
@@ -48,16 +51,19 @@ oppia.controller('StateEditor', [
 
     var stateData = explorationStatesService.getState($scope.stateName);
     $scope.content = stateData.content;
-    $scope.stateParamChanges = stateData.param_changes || [];
 
     // This should only be non-null when the content editor is open.
     $scope.contentMemento = null;
 
     if ($scope.stateName && stateData) {
       $rootScope.$broadcast('stateEditorInitialized', stateData);
-      $scope.isCurrentStateTerminal = GLOBALS.interactionConfigs[
-        stateData.interaction.id].is_terminal;
+      $scope.isInteractionIdSet = Boolean(stateData.interaction.id);
+      $scope.isCurrentStateTerminal = (
+        $scope.isInteractionIdSet &&
+        INTERACTION_SPECS[stateData.interaction.id].is_terminal);
     }
+
+    $rootScope.loadingMessage = '';
   };
 
   $scope.openStateContentEditor = function() {
@@ -90,19 +96,5 @@ oppia.controller('StateEditor', [
        editorContextService.getActiveStateName());
      $scope.content = angular.copy(_stateData.content);
      $scope.contentMemento = null;
-  };
-
-  $scope.saveStateParamChanges = function(newValue, oldValue) {
-    if (!angular.equals(newValue, oldValue)) {
-      changeListService.editStateProperty(
-        editorContextService.getActiveStateName(), 'param_changes',
-        newValue, oldValue);
-
-      var _stateData = explorationStatesService.getState(
-        editorContextService.getActiveStateName());
-      _stateData.param_changes = angular.copy(newValue);
-      explorationStatesService.setState(
-        editorContextService.getActiveStateName(), _stateData);
-    }
   };
 }]);

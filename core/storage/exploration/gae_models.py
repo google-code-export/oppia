@@ -311,6 +311,9 @@ class ExpSummaryModel(base_models.BaseModel):
     # Skill tags associated with this exploration.
     skill_tags = ndb.StringProperty(repeated=True, indexed=True)
 
+    # Aggregate user-assigned ratings of the exploration
+    ratings = ndb.JsonProperty(default=None, indexed=False)
+
     # Time when the exploration model was last updated (not to be
     # confused with last_updated, which is the time when the
     # exploration *summary* model was last updated)
